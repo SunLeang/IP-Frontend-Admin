@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: ["class"],
@@ -14,6 +14,7 @@ const config: Config = {
         sans: ["Kantumruy Pro", "sans-serif"],
       },
       colors: {
+        primaryblue: "#4880FF",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -25,7 +26,7 @@ const config: Config = {
           foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "#4880FF",
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -94,7 +95,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
-}
-export default config
-
+  plugins: [require("tailwindcss-animate")],
+};
+export default config;
