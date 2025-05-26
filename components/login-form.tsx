@@ -3,10 +3,12 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Icon } from "@iconify/react"
+import { useRouter } from 'next/navigation'
 
 export default function LoginForm() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const [loginType, setLoginType] = useState<"admin" | "superadmin">("superadmin")
+  const [loginType, setLoginType] = useState<"admin" | "superAdmin">("superAdmin")
   const [formValues, setFormValues] = useState({
     username: "",
     email: "",
@@ -55,10 +57,16 @@ export default function LoginForm() {
   const toggleLoginType = () => {
     setIsTransitioning(true)
     setTimeout(() => {
-      setLoginType((prev) => (prev === "admin" ? "superadmin" : "admin"))
+      setLoginType((prev) => (prev === "admin" ? "superAdmin" : "admin"))
       setIsTransitioning(false)
     }, 300)
   }
+
+  const handleLogin = () => {
+    // Add validation logic here
+    router.push(`/${loginType}/dashboard`)
+  }
+  
 
   return (
     <div className="flex flex-col flex-1 p-7 items-center pt-12">
@@ -76,7 +84,7 @@ export default function LoginForm() {
               {/* Username field (only in superadmin mode) */}
               <div
                 className={`transition-all duration-300 ease-in-out ${
-                  loginType === "superadmin"
+                  loginType === "superAdmin"
                     ? "max-h-[54px] opacity-100 mb-4"
                     : "max-h-0 opacity-0 mb-0 overflow-hidden"
                 }`}
@@ -157,7 +165,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-          <button className="flex justify-center items-center w-full h-[50px] bg-[#4880FF] rounded-[10px] text-white text-base font-['Kantumruy_Pro'] mt-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:bg-[#3A70F0]">
+          <button type="button" onClick={handleLogin} className="flex justify-center items-center w-full h-[50px] bg-[#4880FF] rounded-[10px] text-white text-base font-['Kantumruy_Pro'] mt-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:bg-[#3A70F0]">
             Login
           </button>
 

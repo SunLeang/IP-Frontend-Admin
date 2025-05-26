@@ -1,4 +1,3 @@
-import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
 
@@ -20,8 +19,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body className="font-sans bg-gray-100 text-gray-900">
+        {children}
+      </body>
     </html>
   )
 }
-
