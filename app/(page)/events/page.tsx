@@ -31,12 +31,21 @@ export default function page() {
     <div className="mr-10">
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-semibold">Events</h2>
-        <Link
-          href="/events/create_event"
-          className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
-        >
-          Create Event
-        </Link>
+        <div className="flex gap-4">
+          <Link
+            href="/events/lists/details"
+            className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
+          >
+            Event Lists
+          </Link>
+
+          <Link
+            href="/events/create_event/details"
+            className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
+          >
+            Create Event
+          </Link>
+        </div>
       </div>
 
       <EventCard events={events} showSeeMoreButton={false} />

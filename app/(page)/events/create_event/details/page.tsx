@@ -2,32 +2,26 @@
 
 import { CalendarDays, Clock, CloudDownload, Pencil } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Header from "../../(components)/Header";
 
 export default function page() {
   const [address, setAddress] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [selectedTime, setSelectedTime] = useState<Date | null>(new Date());
 
   const user = "Jeffrey Zin";
 
-  const [toggleLabel, setToggleLabel] = useState<boolean>(false);
+  const [toggleDate, setToggleDate] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6 flex flex-col">
+    <div className="min-h-screen bg-white px-4 py-6 flex flex-col gap-2 mb-40">
       <div className="flex flex-col">
-        <div className="w-1/2 flex justify-center self-center gap-10 mb-6 bg-white rounded-3xl shadow-md py-2 px-20">
-          <button className="bg-primaryblue text-white px-6 py-2 rounded-xl">
-            Details
-          </button>
-          <button className="border border-black px-6 py-2 rounded-xl">
-            Volunteer
-          </button>
-        </div>
+        <Header />
 
         {/* File Upload 1 */}
         <div className="w-full max-w-full mb-12 border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-white">
@@ -56,7 +50,7 @@ export default function page() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-2 ml-2">
+        <div className="flex flex-col gap-4 ml-2 my-4">
           <div className="flex text-xl font-semibold">
             <p>Date and Time</p>
           </div>
@@ -65,49 +59,31 @@ export default function page() {
             htmlFor="date-picker"
             className="flex gap-2 items-center"
             onClick={() => {
-              setToggleLabel(true);
+              setToggleDate(true);
             }}
           >
             <CalendarDays />
-            <p className={`${toggleLabel ? "hidden" : "block"} `}>
-              Choose Date
+            <p className={`text-sm ${toggleDate ? "hidden" : "block"} `}>
+              Choose Date and Time
             </p>
             <DatePicker
               id="date-picker"
-              dateFormat="dd/MM/yyyy"
+              dateFormat="dd/MM/yyyy h:mm aa"
               selected={selectedDate}
               onChange={(date) => setSelectedDate(date || null)}
+              className={`text-sm ${toggleDate ? "block" : "hidden"} `}
               toggleCalendarOnIconClick
-              className={`${toggleLabel ? "block" : "hidden"} `}
-            />
-          </label>
-
-          <label
-            htmlFor="time-picker"
-            className="flex gap-2 items-center"
-            onClick={() => {
-              setToggleLabel(true);
-            }}
-          >
-            <Clock />
-            <p className={`${toggleLabel ? "hidden" : "block"} `}>
-              Choose Time
-            </p>
-            <DatePicker
-              id="time-picker"
-              dateFormat="dd/MM/yyyy"
-              selected={selectedTime}
-              onChange={(date) => setSelectedDate(date || null)}
-              toggleCalendarOnIconClick
-              showTimeSelectOnly
-              className={`${toggleLabel ? "block" : "hidden"} `}
+              showTimeSelect
+              timeIntervals={15}
+              showTimeInput
+              withPortal
             />
           </label>
 
           <div className="ml-4 text-[#7769F7]">+ Add to Calendar</div>
         </div>
 
-        <div className="h-12"></div>
+        <div className="h-8"></div>
       </div>
 
       {/* File Upload 2 */}
