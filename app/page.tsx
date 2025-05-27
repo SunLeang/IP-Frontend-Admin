@@ -1,103 +1,184 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useRef, useEffect } from 'react';
+import { Home, Search, Filter, MoreVertical, Plus, Printer } from 'lucide-react';
+
+const tasks = [
+  { id: "ev-000001", description: "Event Setup & Cleanup", status: "Pending", type: "Logistic", date: "12-12-2024" },
+  { id: "ev-000002", description: "Book Organization", status: "Pending", type: "Logistic", date: "12-12-2024" },
+  { id: "ev-000003", description: "Guess Assistance", status: "Pending", type: "Assistance", date: "12-12-2024" },
+  { id: "ev-000004", description: "Inventory Management", status: "Done", type: "Logistic", date: "12-12-2024" },
+  { id: "ev-000005", description: "Event Photography", status: "Done", type: "Media", date: "12-12-2024" },
+  { id: "ev-000006", description: "Safety & Security Awareness", status: "Pending", type: "Assistance", date: "12-12-2024" },
+  { id: "ev-000007", description: "Visitor Feedback Collection", status: "Done", type: "Media", date: "12-12-2024" },
+  { id: "ev-000008", description: "Announcement Assistance", status: "Pending", type: "Assistance", date: "12-12-2024" },
+  { id: "ev-000009", description: "Decor & Atmosphere", status: "Done", type: "IT", date: "12-12-2024" },
+  { id: "ev-000010", description: "Vendor & Exhibitor Support", status: "Done", type: "Assistance", date: "12-12-2024" },
+];
+
+export default function Page() {
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState(10);
+  const [showMenu, setShowMenu] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const menuRef = useRef(null);
+
+  const filteredTasks = tasks.filter((task) =>
+    task.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !(menuRef.current as any).contains(event.target)) {
+        setActiveMenu(null);
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Events Task:</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center text-sm text-gray-500 space-x-2">
+          <Home size={16} className="text-gray-400" />
+          <span className="text-gray-600">Events</span>
+          <span>&gt;</span>
+          <span className="font-medium text-gray-800">Volunteers</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div className="relative flex items-center border border-gray-300 rounded-full px-3 py-1 w-full sm:w-72 bg-white shadow-sm">
+          <Search size={16} className="text-gray-400 mr-2" />
+          <input
+            type="text"
+            placeholder="Search"
+            className="flex-grow outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <Filter size={16} className="text-gray-400 mx-2" />
+          <button onClick={() => setShowMenu(!showMenu)}>
+            <MoreVertical size={16} className="text-gray-400" />
+          </button>
+
+          {showMenu && (
+            <div
+              ref={menuRef}
+              className="absolute top-10 right-0 w-40 bg-white border border-gray-200 rounded-md shadow-md z-10"
+            >
+              <button className="flex items-center w-full px-4 py-2 hover:bg-gray-100 text-sm">
+                <Plus size={16} className="mr-2" /> Create
+              </button>
+              <button className="flex items-center w-full px-4 py-2 hover:bg-gray-100 text-sm">
+                <Printer size={16} className="mr-2" /> Print
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
+        <table className="min-w-full text-sm text-left">
+          <thead>
+            <tr className="border-b text-gray-600 font-semibold">
+              <th className="px-4 py-2">No.</th>
+              <th className="px-4 py-2">ID</th>
+              <th className="px-4 py-2">Description</th>
+              <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2">Types</th>
+              <th className="px-4 py-2">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task, i) => (
+                <tr key={task.id} className="border-b hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-2">{i + 1}</td>
+                  <td className="px-4 py-2">{task.id}</td>
+                  <td className="px-4 py-2">{task.description}</td>
+                  <td className="px-4 py-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        task.status === "Done"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-orange-100 text-orange-600"
+                      }`}
+                    >
+                      {task.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">{task.type}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex flex-col items-start relative">
+                      <span className="text-sm">{task.date}</span>
+                      <button
+                        className="absolute top-0 right-0 cursor-pointer"
+                        onClick={() =>
+                          setActiveMenu(activeMenu === task.id ? null : task.id)
+                        }
+                      >
+                        <MoreVertical size={16} className="text-gray-400" />
+                      </button>
+                      {activeMenu === task.id && (
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 top-6 w-32 bg-white border border-gray-200 rounded-md shadow-md z-10"
+                        >
+                          <button className="flex items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-100 w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            View
+                          </button>
+                          <button className="flex items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-100 w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Complete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="text-center text-gray-400 py-4">
+                  No matching tasks found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <div className="flex justify-between items-center mt-4 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <select
+              className="border rounded px-2 py-1"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+            >
+              <option>10</option>
+              <option>25</option>
+              <option>50</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-4">
+            <span>1 – {pageSize} of {tasks.length}</span>
+            <div className="flex items-center gap-2">
+              <button className="p-1 hover:bg-gray-100 rounded">&laquo;</button>
+              <button className="p-1 hover:bg-gray-100 rounded">&lsaquo;</button>
+              <button className="p-1 hover:bg-gray-100 rounded">&rsaquo;</button>
+              <button className="p-1 hover:bg-gray-100 rounded">&raquo;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
