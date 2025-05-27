@@ -57,7 +57,7 @@ const settingsItems = [
 
 const Sidebar: React.FC<SidebarProps> = ({ children, user }) => {
   const [mounted, setMounted] = useState(false);
-  const [isActiveSidebar, setIsActiveSidebar] = useState(true);
+  const [isActiveSidebar, setIsActiveSidebar] = useState(false);
   const pathname = usePathname();
 
   const isActiveTab = (href: string) => pathname === href;
@@ -69,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children, user }) => {
   if (!mounted || !pathname) return null;
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-white">
       <div
         className={`w-64 bg-white flex flex-col border-r border-gray-200 p-4 justify-between ${
           isActiveSidebar ? "block" : "hidden"
