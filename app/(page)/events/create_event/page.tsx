@@ -1,22 +1,21 @@
 "use client";
 
-import {
-  CalendarDays,
-  Clock,
-  Cloud,
-  CloudDownload,
-  Pencil,
-  PencilLine,
-} from "lucide-react";
+import { CalendarDays, Clock, CloudDownload, Pencil } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function page() {
   const [address, setAddress] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedTime, setSelectedTime] = useState<Date | null>(new Date());
 
   const user = "Jeffrey Zin";
+
+  const [toggleLabel, setToggleLabel] = useState<boolean>(false);
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 flex flex-col">
@@ -62,15 +61,48 @@ export default function page() {
             <p>Date and Time</p>
           </div>
 
-          <div className="flex gap-2">
+          <label
+            htmlFor="date-picker"
+            className="flex gap-2 items-center"
+            onClick={() => {
+              setToggleLabel(true);
+            }}
+          >
             <CalendarDays />
-            <p>Choose Date</p>
-          </div>
+            <p className={`${toggleLabel ? "hidden" : "block"} `}>
+              Choose Date
+            </p>
+            <DatePicker
+              id="date-picker"
+              dateFormat="dd/MM/yyyy"
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date || null)}
+              toggleCalendarOnIconClick
+              className={`${toggleLabel ? "block" : "hidden"} `}
+            />
+          </label>
 
-          <div className="flex gap-2">
+          <label
+            htmlFor="time-picker"
+            className="flex gap-2 items-center"
+            onClick={() => {
+              setToggleLabel(true);
+            }}
+          >
             <Clock />
-            <div>Choose Time</div>
-          </div>
+            <p className={`${toggleLabel ? "hidden" : "block"} `}>
+              Choose Time
+            </p>
+            <DatePicker
+              id="time-picker"
+              dateFormat="dd/MM/yyyy"
+              selected={selectedTime}
+              onChange={(date) => setSelectedDate(date || null)}
+              toggleCalendarOnIconClick
+              showTimeSelectOnly
+              className={`${toggleLabel ? "block" : "hidden"} `}
+            />
+          </label>
 
           <div className="ml-4 text-[#7769F7]">+ Add to Calendar</div>
         </div>
