@@ -18,13 +18,10 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAdmin } from "@/app/context/adminContext";
 
 type SidebarProps = {
   children?: React.ReactNode;
-  user: {
-    name: string;
-    email: string;
-  };
 };
 
 const navItems = [
@@ -55,9 +52,9 @@ const settingsItems = [
   { label: "Logout", icon: <Power className="w-5 h-5" />, href: "/logout" },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ children, user }) => {
+const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
-  const [isActiveSidebar, setIsActiveSidebar] = useState(false);
+  const { user, isActiveSidebar, setIsActiveSidebar } = useAdmin();
   const pathname = usePathname();
 
   const isActiveTab = (href: string) => pathname === href;
@@ -76,11 +73,6 @@ const Sidebar: React.FC<SidebarProps> = ({ children, user }) => {
         }`}
       >
         <div>
-          <h1 className="text-2xl font-bold text-primaryblue text-center mb-4">
-            Eventura
-          </h1>
-          <hr className="mb-4" />
-
           <div className="space-y-2">
             {navItems.map((item) => (
               <Link
@@ -135,12 +127,6 @@ const Sidebar: React.FC<SidebarProps> = ({ children, user }) => {
           <ChevronDown className="w-5 h-5 text-gray-500" />
         </div>
       </div>
-
-      <div className="bg-white relative flex flex-col w-fit h-fit p-1 mt-4 ml-4 rounded-lg">
-        <PanelLeft onClick={() => setIsActiveSidebar(!isActiveSidebar)} />
-      </div>
-
-      <main className="flex-1 overflow-auto p-6">{children}</main>
     </div>
   );
 };

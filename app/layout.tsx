@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "../components/sidebar";
 import Header from "@/components/Header";
+import AdminProvider from "./context/adminContext";
 
 export const metadata: Metadata = {
   title: "Eventura",
@@ -23,15 +24,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Header />
-        <Sidebar
-          user={{
-            name: "Wathrak",
-            email: "wathrak1@gmail.com",
-          }}
-        >
-          {children}
-        </Sidebar>
+        <AdminProvider>
+          <Header />
+          <div className="flex">
+            <Sidebar />
+            {children}
+          </div>
+        </AdminProvider>
       </body>
     </html>
   );

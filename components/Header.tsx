@@ -1,17 +1,35 @@
-import { PanelLeft } from "lucide-react";
-import React from "react";
+"use client";
+import { useAdmin } from "@/app/context/adminContext";
+import { Bell, BellDot, PanelLeft } from "lucide-react";
+import React, { useState } from "react";
+import { Input } from "./ui/input";
 
 export default function Header() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-primaryblue text-center mb-4">
-        Eventura
-      </h1>
+  const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
+  const [search, setSearch] = useState("");
 
-      <div className="bg-white relative flex flex-col w-fit h-fit p-1 mt-4 ml-4 rounded-lg">
-        {/* <PanelLeft onClick={() => setIsActiveSidebar(!isActiveSidebar)} /> */}
+  return (
+    <div className="h-16 flex justify-start items-center gap-4 bg-white">
+      <div className="w-64">
+        <h1 className="text-2xl font-bold text-primaryblue text-center">
+          Eventura
+        </h1>
       </div>
-      {/* <hr className="mb-4" /> */}
+      <div className="bg-white flex items-center gap-4 w-fit h-fit p-1 rounded-lg">
+        <PanelLeft onClick={() => setIsActiveSidebar(!isActiveSidebar)} />
+
+        <Input
+          type="text"
+          placeholder="Search"
+          value={search}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearch(e.target.value)
+          }
+          className="w-48 rounded-xl"
+        />
+
+        <BellDot color="blue" />
+      </div>
     </div>
   );
 }
