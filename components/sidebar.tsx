@@ -58,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   const pathname = usePathname();
 
   const isActiveTab = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/");
+    pathname === href || pathname.startsWith("admin" + href + "/");
 
   useEffect(() => {
     setMounted(true);
