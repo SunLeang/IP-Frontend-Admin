@@ -1,7 +1,8 @@
 import type React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "./(components)/sidebar";
+import Sidebar from "../components/sidebar";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "Eventura",
@@ -22,6 +23,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <Header />
         <Sidebar
           user={{
             name: "Wathrak",
