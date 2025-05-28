@@ -14,6 +14,7 @@ interface AdminProviderProps {
 interface UserProps {
   name: string;
   email: string;
+  role: string;
 }
 
 const AdminContext = createContext<AdminContextProps | undefined>(undefined);
@@ -30,6 +31,7 @@ export default function AdminProvider({ children }: AdminProviderProps) {
   const [user, setUser] = useState({
     name: "Wathrak",
     email: "wathrak1@gmail.com",
+    role: "Admin",
   });
   const [isActiveSidebar, setIsActiveSidebar] = useState(true);
 

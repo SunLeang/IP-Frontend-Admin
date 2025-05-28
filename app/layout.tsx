@@ -23,12 +23,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body className="h-screen">
         <AdminProvider>
-          <Header />
-          <div className="flex">
-            <Sidebar />
-            {children}
+          <div className="flex flex-col h-screen">
+            <Header />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar />
+              <main className="w-full p-4 overflow-auto">{children}</main>
+            </div>
           </div>
         </AdminProvider>
       </body>

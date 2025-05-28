@@ -63,8 +63,8 @@ export default function page() {
   return (
     <div className="flex flex-col">
       <Header />
-      <div className="p-6 bg-gray-50 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Event Details</h2>
+      <div className="table-box">
+        {/* <h2 className="text-xl font-semibold mb-4">Event Details</h2> */}
         <DataTable headers={headers} rows={eventDetails} title="Details" />
       </div>
     </div>

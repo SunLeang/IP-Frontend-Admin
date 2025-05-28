@@ -86,7 +86,7 @@ export default function DataTable({
 
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b text-muted-foreground bg-red-400">
+          <tr className="border-b text-muted-foreground bg-gray-200">
             {headers.map((header, index) => (
               <th key={index} className="py-2 px-2 text-black">
                 {header}

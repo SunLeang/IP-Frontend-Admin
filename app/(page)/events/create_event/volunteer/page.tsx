@@ -20,11 +20,11 @@ export default function page() {
   const [toggleDate, setToggleDate] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6 flex flex-col gap-2 mb-40">
-      <div className="flex flex-col">
-        <Header />
+    <div className="min-h-screen bg-gray-100 px-4 py-6 flex flex-col gap-2 mb-40">
+      <Header />
 
-        {/* File Upload 1 */}
+      <div className="flex flex-col">
+        {/* File Upload */}
         <div className="w-full max-w-full mb-12 border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-white">
           <CloudDownload />
           <p className="font-medium">Choose a file or drag & drop it here</p>

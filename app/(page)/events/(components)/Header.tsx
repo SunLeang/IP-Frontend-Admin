@@ -29,7 +29,7 @@ export default function Header() {
           <Link
             key={link.href}
             href={link.href}
-            className={`px-6 py-2 rounded-xl transition ${
+            className={`self-center px-6 py-2 rounded-xl transition ${
               isActive
                 ? "bg-primaryblue text-white"
                 : "border-2 border-black text-black"

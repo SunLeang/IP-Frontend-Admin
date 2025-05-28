@@ -57,7 +57,8 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   const { user, isActiveSidebar, setIsActiveSidebar } = useAdmin();
   const pathname = usePathname();
 
-  const isActiveTab = (href: string) => pathname === href;
+  const isActiveTab = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
 
   useEffect(() => {
     setMounted(true);
@@ -66,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   if (!mounted || !pathname) return null;
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex bg-white">
       <div
         className={`w-64 bg-white flex flex-col border-r border-gray-200 p-4 justify-between ${
           isActiveSidebar ? "block" : "hidden"
