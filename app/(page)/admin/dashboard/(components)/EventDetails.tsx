@@ -1,5 +1,4 @@
 "use client";
-
 interface Event {
   name: string;
   location: string;

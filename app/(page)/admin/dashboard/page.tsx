@@ -1,9 +1,16 @@
 "use client";
-
 import { useState } from "react";
-import EventDetailsChart from "./(components)/EventDetailsChart";
 import EventDetailsSummary from "./(components)/EventDetailsSummary";
 import EventDetails from "./(components)/EventDetails";
+import dynamic from "next/dynamic";
+
+// Hydration Fail Error (Fix By Disabling Server Side Rendering)
+const EventDetailsChart = dynamic(
+  () => import("./(components)/EventDetailsChart"),
+  {
+    ssr: false,
+  }
+);
 
 const cardData = [
   {
@@ -81,7 +88,7 @@ const enhancedEventData = eventData.map((event, index) => {
 });
 
 export default function Dashboard() {
-  const [isViewChart, setIsViewChart] = useState(false);
+  const [isViewChart, setIsViewChart] = useState(true);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">

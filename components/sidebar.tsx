@@ -2,23 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
-  Calendar,
   Heart,
-  Megaphone,
   Settings,
   Power,
   ChevronDown,
   MessagesSquare,
   Grid2X2,
   CircleGauge,
-  Rows2,
-  Rows3,
-  PanelLeft,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAdmin } from "@/app/context/adminContext";
+import LogoutAlert from "./logout-alert";
 
 type SidebarProps = {
   children?: React.ReactNode;
@@ -51,18 +46,29 @@ const settingsItems = [
   {
     label: "Settings",
     icon: <Settings className="w-5 h-5" />,
-    href: "/settings",
+    href: "/admin/settings",
   },
-  { label: "Logout", icon: <Power className="w-5 h-5" />, href: "/logout" },
+  {
+    label: "Logout",
+    icon: <Power className="w-5 h-5" />,
+    action: "logout",
+  },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
   const { user, isActiveSidebar, setIsActiveSidebar } = useAdmin();
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const isActiveTab = (href: string) =>
     pathname === href || pathname.startsWith("admin" + href + "/");
+
+  const handleLogout = () => {
+    setIsLogoutOpen(false);
+    router.push("/login");
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -100,22 +106,33 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
           <hr className="my-4" />
 
           <div className="space-y-2">
-            {settingsItems.map((item) => (
-              <Link
-                href={item.href}
-                key={item.label}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md w-full transition-colors
-                ${
-                  isActiveTab(item.href)
-                    ? "bg-primaryblue text-white"
-                    : "bg-white text-black hover:bg-blue-100"
-                }
-              `}
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            ))}
+            {settingsItems.map((item) =>
+              item.href ? (
+                <Link
+                  href={item.href}
+                  key={item.label}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md w-full transition-colors
+        ${
+          isActiveTab(item.href)
+            ? "bg-primaryblue text-white"
+            : "bg-white text-black hover:bg-blue-100"
+        }
+      `}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              ) : item.action === "logout" ? (
+                <button
+                  key={item.label}
+                  onClick={() => setIsLogoutOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md w-full text-left transition-colors bg-white text-black hover:bg-red-100"
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ) : null
+            )}
           </div>
         </div>
 
@@ -132,6 +149,11 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
           <ChevronDown className="w-5 h-5 text-gray-500" />
         </div>
       </div>
+      <LogoutAlert
+        isOpen={isLogoutOpen}
+        onClose={() => setIsLogoutOpen(false)}
+        onLogout={handleLogout}
+      />
     </div>
   );
 };

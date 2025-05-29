@@ -1,7 +1,8 @@
 "use client";
-import Link from "next/link";
-import { PieChart } from "lucide-react";
-
+import { PieChartIcon } from "lucide-react";
+import * as React from "react";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { PieChart } from "@mui/x-charts/PieChart";
 interface EventData {
   number: number;
   name: string;
@@ -48,14 +49,35 @@ export default function EventDetailsChart({
               src="https://img.icons8.com/?size=100&id=Im6MKqbsOZcm&format=png&color=737373"
               alt="Dashboard icon"
             />
-            <PieChart className="h-5 w-5 text-blue-600" />
+            <PieChartIcon className="h-5 w-5 text-blue-600" />
           </button>
         </div>
       </div>
 
       <hr className="mb-4" />
 
-      <div className="flex justify-center">
+      {/* Pie Chart */}
+      <PieChart
+        series={[
+          {
+            data: [
+              { id: 0, value: 10, label: "series A" },
+              { id: 1, value: 15, label: "series B" },
+              { id: 2, value: 20, label: "series C" },
+            ],
+            innerRadius: 30,
+            outerRadius: 100,
+            // paddingAngle: 5,
+            cornerRadius: 5,
+            startAngle: 180,
+            endAngle: 60,
+          },
+        ]}
+        width={200}
+        height={200}
+      />
+
+      {/* <div className="flex justify-center">
         <div
           className={`${gradient} w-64 h-32 rounded-full flex items-center justify-center`}
         >
@@ -63,7 +85,7 @@ export default function EventDetailsChart({
             {eventNumber} {eventNumber === 1 ? "Event" : "Events"}
           </h3>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex justify-center mt-4 gap-4">
         {data.map((event, idx) => (
