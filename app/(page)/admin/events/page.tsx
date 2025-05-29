@@ -33,14 +33,14 @@ export default function page() {
         <h2 className="text-2xl font-semibold">Events</h2>
         <div className="flex gap-4">
           <Link
-            href="/events/lists/details"
+            href="/admin/events/lists/details"
             className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
           >
             Event Lists
           </Link>
 
           <Link
-            href="/events/create_event/details"
+            href="/admin/events/create_event/details"
             className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
           >
             Create Event

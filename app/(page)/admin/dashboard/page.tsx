@@ -81,7 +81,7 @@ const enhancedEventData = eventData.map((event, index) => {
 });
 
 export default function Dashboard() {
-  const [isViewChart, setIsViewChart] = useState(true);
+  const [isViewChart, setIsViewChart] = useState(false);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">

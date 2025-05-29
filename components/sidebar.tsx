@@ -28,18 +28,22 @@ const navItems = [
   {
     label: "Dashboard",
     icon: <CircleGauge className="w-5 h-5" />,
-    href: "/",
+    href: "/admin/dashboard",
   },
-  { label: "Event", icon: <Grid2X2 className="w-5 h-5" />, href: "/events" },
+  {
+    label: "Event",
+    icon: <Grid2X2 className="w-5 h-5" />,
+    href: "/admin/events",
+  },
   {
     label: "Volunteer",
     icon: <Heart className="w-5 h-5" />,
-    href: "/volunteer",
+    href: "/admin/volunteer",
   },
   {
     label: "Announcement",
     icon: <MessagesSquare className="w-5 h-5" />,
-    href: "/announcement",
+    href: "/admin/announcement",
   },
 ];
 
