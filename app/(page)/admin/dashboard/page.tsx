@@ -53,7 +53,7 @@ const eventData = [
     name: "Songkran",
     attendee: "121/121",
     volunteer: "10/10",
-    progress: 100,
+    progress: 45,
     location: "Aeon Mall Sensok",
     dateTime: "12.09.2025 - 12.53 PM",
     status: "Full",
@@ -63,8 +63,18 @@ const eventData = [
     name: "BookFair",
     attendee: "113/220",
     volunteer: "18/20",
-    progress: 56,
+    progress: 30,
     location: "Institute of Technology of Cambodia",
+    dateTime: "12.09.2025 - 12.53 PM",
+    status: "Pending",
+  },
+  {
+    number: 3,
+    name: "Concert",
+    attendee: "113/220",
+    volunteer: "18/20",
+    progress: 60,
+    location: "Koh Pich",
     dateTime: "12.09.2025 - 12.53 PM",
     status: "Pending",
   },
@@ -88,16 +98,16 @@ const enhancedEventData = eventData.map((event, index) => {
 });
 
 export default function Dashboard() {
-  const [isViewChart, setIsViewChart] = useState(true);
+  const [isViewChart, setIsViewChart] = useState(false);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+        {/* <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
           Download Report
-        </button>
+        </button> */}
       </div>
 
       {/* Events Cards */}

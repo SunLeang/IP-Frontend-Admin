@@ -1,4 +1,6 @@
 "use client";
+import axios from "axios";
+import { stringify } from "querystring";
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
 interface AdminContextProps {
@@ -12,14 +14,27 @@ interface AdminProviderProps {
 }
 
 interface UserProps {
-  name: string;
+  id?: string;
   email: string;
-  role: string;
+  username: string;
+  fullName?: string;
+  password: string;
+  systemRole: string;
+  currentRole?: string;
 }
 
 const AdminContext = createContext<AdminContextProps | undefined>(undefined);
 
 export function useAdmin() {
+  const [user, setUser] = useState();
+  // const [id, setId] = useState("");
+  // const [email, setEmail] = useState("");
+  // const [username, setUsername] = useState("");
+  // const [fullName, setFullName] = useState("");
+  // const [systemRole, setSystemRole] = useState("");
+  // const [currentRole, setCurrentRole] = useState("");
+  // const [password, setPassword] = useState("");
+
   const context = useContext(AdminContext);
   if (!context) {
     throw new Error("useUser must be used within a UserProvider");
@@ -29,9 +44,10 @@ export function useAdmin() {
 
 export default function AdminProvider({ children }: AdminProviderProps) {
   const [user, setUser] = useState({
-    name: "Wathrak",
+    username: "Wathrak",
     email: "wathrak1@gmail.com",
-    role: "Admin",
+    password: "123456",
+    systemRole: "Admin",
   });
   const [isActiveSidebar, setIsActiveSidebar] = useState(true);
 

@@ -13,9 +13,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 
 export default function Header() {
-  const { isActiveSidebar, setIsActiveSidebar, user } = useAdmin();
+  const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
   const [search, setSearch] = useState("");
 
+  const user = {
+    name: "Wathrak",
+    email: "wathrak1@gmail.com",
+    role: "Admin",
+  };
   return (
     <div className="bg-white h-16 flex justify-start items-center gap-4">
       <div className={`${isActiveSidebar ? "block" : "hidden"} min-w-64`}>

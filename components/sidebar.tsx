@@ -57,10 +57,16 @@ const settingsItems = [
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
-  const { user, isActiveSidebar, setIsActiveSidebar } = useAdmin();
+  const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  const user = {
+    name: "Wathrak",
+    email: "wathrak1@gmail.com",
+    role: "Admin",
+  };
 
   const isActiveTab = (href: string) =>
     pathname === href || pathname.startsWith("admin" + href + "/");

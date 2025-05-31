@@ -1,8 +1,10 @@
 "use client";
 import { PieChartIcon } from "lucide-react";
 import * as React from "react";
-import { BarChart } from "@mui/x-charts/BarChart";
+import { legendClasses } from "@mui/x-charts/ChartsLegend";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { PiecewiseColorLegend } from "@mui/x-charts/ChartsLegend";
+
 interface EventData {
   number: number;
   name: string;
@@ -38,8 +40,14 @@ export default function EventDetailsChart({
 
   const gradient = `bg-gradient-to-r ${colorFrom} ${colorTo}`;
 
+  const pie = data.map((event, index) => ({
+    id: index + 1,
+    value: event.progress,
+    label: event.name,
+  }));
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div className="bg-white pt-4 pr-4 pl-4 rounded-lg shadow-md mb-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Event Chart</h2>
         <div className="flex items-center justify-between mb-4 gap-4">
@@ -60,34 +68,54 @@ export default function EventDetailsChart({
       <PieChart
         series={[
           {
-            data: [
-              { id: 0, value: 10, label: "series A" },
-              { id: 1, value: 15, label: "series B" },
-              { id: 2, value: 20, label: "series C" },
-            ],
-            innerRadius: 30,
-            outerRadius: 100,
+            data: pie,
+            innerRadius: 90,
+            outerRadius: 145,
+            // cornerRadius: 5,
+            startAngle: -90,
+            endAngle: 90,
+            highlightScope: { fade: "global", highlight: "item" },
+            faded: { innerRadius: 30, additionalRadius: -30, color: "gray" },
+            cx: 145,
+            cy: 150,
             // paddingAngle: 5,
-            cornerRadius: 5,
-            startAngle: 180,
-            endAngle: 60,
+            // arcLabel: (item) => `${item.value}%`,
           },
         ]}
-        width={200}
+        // slots={{ legend: PiecewiseColorLegend }}
+        slotProps={{
+          legend: {
+            direction: "horizontal",
+            position: {
+              vertical: "bottom",
+              horizontal: "center",
+            },
+            sx: {
+              gap: "16px",
+              [`.${legendClasses.mark}`]: {
+                height: 15,
+                width: 15,
+              },
+              [".MuiChartsLegend-series"]: {
+                gap: "8px",
+              },
+            },
+          },
+        }}
+        // hideLegend={false}
+        width={300}
         height={200}
       />
 
-      {/* <div className="flex justify-center">
-        <div
-          className={`${gradient} w-64 h-32 rounded-full flex items-center justify-center`}
-        >
-          <h3 className="text-white font-bold text-xl">
-            {eventNumber} {eventNumber === 1 ? "Event" : "Events"}
-          </h3>
-        </div>
-      </div> */}
+      <div className="flex justify-center relative bottom-24">
+        <h3 className="text-gray-600 font-bold text-l text-center">
+          <div>{eventNumber}</div>
+          <div>{eventNumber === 1 ? "Event" : "Events"}</div>
+        </h3>
+      </div>
 
-      <div className="flex justify-center mt-4 gap-4">
+      {/* Manual Legends */}
+      {/* <div className="flex justify-center pb-10 gap-4">
         {data.map((event, idx) => (
           <div key={idx} className="flex items-center gap-2">
             <span
@@ -99,7 +127,7 @@ export default function EventDetailsChart({
             <span>{event.name}</span>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

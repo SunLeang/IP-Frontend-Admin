@@ -1,72 +1,80 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Icon } from "@iconify/react"
-import { useRouter } from 'next/navigation'
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Icon } from "@iconify/react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginForm() {
-  const router = useRouter()
-  const [showPassword, setShowPassword] = useState(false)
-  const [loginType, setLoginType] = useState<"admin" | "superAdmin">("superAdmin")
+  const router = useRouter();
+  const { setUser, loginApi } = useAuth();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginType, setLoginType] = useState<"admin" | "superAdmin">(
+    "superAdmin"
+  );
   const [formValues, setFormValues] = useState({
     username: "",
     email: "",
     password: "",
-  })
+  });
   const [touched, setTouched] = useState({
     username: false,
     email: false,
     password: false,
-  })
+  });
   const [errors, setErrors] = useState({
     email: "",
-  })
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  });
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Validate email format
   useEffect(() => {
     if (touched.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!formValues.email) {
-        setErrors((prev) => ({ ...prev, email: "" }))
+        setErrors((prev) => ({ ...prev, email: "" }));
       } else if (!emailRegex.test(formValues.email)) {
-        setErrors((prev) => ({ ...prev, email: "Invalid email format" }))
+        setErrors((prev) => ({ ...prev, email: "Invalid email format" }));
       } else {
-        setErrors((prev) => ({ ...prev, email: "" }))
+        setErrors((prev) => ({ ...prev, email: "" }));
       }
     }
-  }, [formValues.email, touched.email])
+  }, [formValues.email, touched.email]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { name } = e.target
+    const { name } = e.target;
     setTouched((prev) => ({
       ...prev,
       [name]: true,
-    }))
-  }
+    }));
+  };
 
   const toggleLoginType = () => {
-    setIsTransitioning(true)
+    setIsTransitioning(true);
     setTimeout(() => {
-      setLoginType((prev) => (prev === "admin" ? "superAdmin" : "admin"))
-      setIsTransitioning(false)
-    }, 300)
-  }
+      setLoginType((prev) => (prev === "admin" ? "superAdmin" : "admin"));
+      setIsTransitioning(false);
+    }, 300);
+  };
 
   const handleLogin = () => {
-    // Add validation logic here
-    router.push(`/${loginType}/dashboard`)
-  }
-  
+    loginApi(formValues);
+    console.log("login page");
+
+    // router.push(`/${loginType}/dashboard`);
+  };
+
+  console.log("formValues:", formValues);
 
   return (
     <div className="flex flex-col flex-1 p-7 items-center pt-12">
@@ -75,12 +83,20 @@ export default function LoginForm() {
           <Icon icon="icon-park-outline:people" width="2.2em" height="2.2em" />
         </div>
 
-        <h1 className="text-[#0F172A] text-xl font-medium font-['Kantumruy_Pro'] mb-2">Logining in your account</h1>
+        <h1 className="text-[#0F172A] text-xl font-medium font-['Kantumruy_Pro'] mb-2">
+          Logining in your account
+        </h1>
 
         <div className="flex flex-col gap-4 w-full">
-          <div className={`flex flex-col space-y-4 relative overflow-hidden transition-all duration-300 ease-in-out`}>
+          <div
+            className={`flex flex-col space-y-4 relative overflow-hidden transition-all duration-300 ease-in-out`}
+          >
             {/* Form fields container with dynamic height */}
-            <div className={`transition-all duration-300 ease-in-out ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                isTransitioning ? "opacity-0" : "opacity-100"
+              }`}
+            >
               {/* Username field (only in superadmin mode) */}
               <div
                 className={`transition-all duration-300 ease-in-out ${
@@ -110,8 +126,8 @@ export default function LoginForm() {
                   errors.email && touched.email
                     ? "border-red-500"
                     : touched.email && formValues.email && !errors.email
-                      ? "border-green-500"
-                      : "border-[#CBD5E1] focus-within:border-[#4880FF]"
+                    ? "border-green-500"
+                    : "border-[#CBD5E1] focus-within:border-[#4880FF]"
                 }`}
               >
                 <div className="flex p-1 px-4 h-[50px] items-center">
@@ -127,15 +143,27 @@ export default function LoginForm() {
                   {touched.email && formValues.email && (
                     <div className="flex items-center ml-1">
                       {errors.email ? (
-                        <Icon icon="mdi:alert-circle" className="text-red-500" width="1.2em" height="1.2em" />
+                        <Icon
+                          icon="mdi:alert-circle"
+                          className="text-red-500"
+                          width="1.2em"
+                          height="1.2em"
+                        />
                       ) : (
-                        <Icon icon="mdi:check-circle" className="text-green-500" width="1.2em" height="1.2em" />
+                        <Icon
+                          icon="mdi:check-circle"
+                          className="text-green-500"
+                          width="1.2em"
+                          height="1.2em"
+                        />
                       )}
                     </div>
                   )}
                 </div>
               </div>
-              {errors.email && touched.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              {errors.email && touched.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
 
               {/* Password field */}
               <div className="flex rounded-[10px] border border-[#CBD5E1] mt-4 shadow-sm hover:shadow transition-all duration-200 focus-within:border-[#4880FF]">
@@ -158,14 +186,22 @@ export default function LoginForm() {
                   {showPassword ? (
                     <Icon icon="octicon:eye-24" width="1.4em" height="1.4em" />
                   ) : (
-                    <Icon icon="mdi:eye-off-outline" width="1.4em" height="1.4em" />
+                    <Icon
+                      icon="mdi:eye-off-outline"
+                      width="1.4em"
+                      height="1.4em"
+                    />
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          <button type="button" onClick={handleLogin} className="flex justify-center items-center w-full h-[50px] bg-[#4880FF] rounded-[10px] text-white text-base font-['Kantumruy_Pro'] mt-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:bg-[#3A70F0]">
+          <button
+            type="button"
+            onClick={handleLogin}
+            className="flex justify-center items-center w-full h-[50px] bg-[#4880FF] rounded-[10px] text-white text-base font-['Kantumruy_Pro'] mt-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:bg-[#3A70F0]"
+          >
             Login
           </button>
 
@@ -174,11 +210,13 @@ export default function LoginForm() {
               onClick={toggleLoginType}
               className="text-[#4880FF] text-sm hover:underline font-['Kantumruy_Pro'] hover:text-[#3A70F0] transition-colors duration-200"
             >
-              {loginType === "admin" ? "Login as Super Admin" : "Login as Admin"}
+              {loginType === "admin"
+                ? "Login as Super Admin"
+                : "Login as Admin"}
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
