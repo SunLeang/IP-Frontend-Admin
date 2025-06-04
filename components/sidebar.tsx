@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAdmin } from "@/app/context/adminContext";
+import { useAdmin } from "@/app/context/AdminContext";
 import LogoutAlert from "./logout-alert";
+import { useAuth } from "@/app/context/AuthContext";
 
 type SidebarProps = {
   children?: React.ReactNode;
@@ -56,22 +57,26 @@ const settingsItems = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ children }) => {
-  const [mounted, setMounted] = useState(false);
-  const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  const user = {
-    name: "Wathrak",
-    email: "wathrak1@gmail.com",
-    role: "Admin",
-  };
+  const [mounted, setMounted] = useState(false);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+
+  const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
+  const { logoutApi, isAuthenticated, user } = useAuth();
+
+  // const user = {
+  //   username: "Wathrak",
+  //   email: "wathrak1@gmail.com",
+  //   systemRole: "Admin",
+  // };
 
   const isActiveTab = (href: string) =>
     pathname === href || pathname.startsWith("admin" + href + "/");
 
   const handleLogout = () => {
+    logoutApi();
     setIsLogoutOpen(false);
     router.push("/login");
   };
@@ -131,7 +136,10 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
               ) : item.action === "logout" ? (
                 <button
                   key={item.label}
-                  onClick={() => setIsLogoutOpen(true)}
+                  onClick={() => {
+                    setIsLogoutOpen(true);
+                    console.log(user);
+                  }}
                   className="flex items-center gap-2 px-4 py-2 rounded-md w-full text-left transition-colors bg-white text-black hover:bg-red-100"
                 >
                   {item.icon}
@@ -145,10 +153,10 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
         <div className="flex items-center justify-between mt-6">
           <div className="flex items-center gap-2">
             <div className="bg-gray-100 text-gray-500 font-semibold w-10 h-10 flex items-center justify-center rounded-full">
-              {user.name[0]}
+              {(user?.username?.[0] ?? "").toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold">{user.name}</p>
+              <p className="font-semibold">{user.username}</p>
               <p className="text-sm text-gray-500">{user.email}</p>
             </div>
           </div>

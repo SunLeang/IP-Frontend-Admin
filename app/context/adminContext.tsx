@@ -26,18 +26,9 @@ interface UserProps {
 const AdminContext = createContext<AdminContextProps | undefined>(undefined);
 
 export function useAdmin() {
-  const [user, setUser] = useState();
-  // const [id, setId] = useState("");
-  // const [email, setEmail] = useState("");
-  // const [username, setUsername] = useState("");
-  // const [fullName, setFullName] = useState("");
-  // const [systemRole, setSystemRole] = useState("");
-  // const [currentRole, setCurrentRole] = useState("");
-  // const [password, setPassword] = useState("");
-
   const context = useContext(AdminContext);
   if (!context) {
-    throw new Error("useUser must be used within a UserProvider");
+    throw new Error("useAdmin must be used within a UserProvider");
   }
   return context;
 }

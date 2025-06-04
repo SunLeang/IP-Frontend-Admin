@@ -1,9 +1,13 @@
 "use client";
-import axios from "axios";
-import { createContext, ReactNode, useContext, useState } from "react";
-import { useAdmin } from "./adminContext";
-
-const LOCALHOST = "http://localhost:3100";
+import { useRouter } from "next/navigation";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import API from "../utils/AxiosInstance";
 
 // admin@example.com
 // Password123!
@@ -21,55 +25,126 @@ interface UserProps {
 
 interface AuthContextType {
   user: UserProps;
-  setUser: React.Dispatch<React.SetStateAction<UserProps>>;
   loginApi: (user: UserProps) => Promise<void>;
-  // accessToken: any;
-  // login: (token: string, RefreshToken: string, role: string) => void;
-  // logout: () => void;
+  logoutApi: () => void;
+  isAuthReady: boolean;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
+
+  const [accessToken, setAccessToken] = useState<string>("");
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserProps>({
     email: "",
     password: "",
   });
-  const [accessToken, setAccessToken] = useState("");
 
   const loginApi = async (user: UserProps) => {
     try {
-      console.log("user email:", user.email, "password:", user.password);
-      // const response = await axios.post(`${LOCALHOST}/auth/login`, {
-      const response = await axios.post(
-        "http://localhost:3100/api/auth/login",
-        {
-          email: user.email,
-          password: user.password,
-        }
-      );
+      const response = await API.post(`/auth/login`, {
+        email: user.email,
+        password: user.password,
+      });
 
-      console.log("response", response.data);
+      const { user: userData, accessToken, refreshToken } = response.data;
 
-      if (
-        response.data &&
-        response.data.accessToken &&
-        response.data.refreshToken
-      ) {
-        setAccessToken(response.data.accessToken);
+      if (userData && accessToken && refreshToken) {
+        setUser(userData);
+
+        localStorage.setItem("refreshToken", refreshToken);
+        setAccessToken(accessToken);
+        setIsAuthenticated(true);
+
+        API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+
+        router.push("/admin/dashboard");
       } else {
-        throw new Error("Login Failed");
+        throw new Error("Login failed");
       }
-      console.log("response:: ", response);
     } catch (error) {
-      throw new Error("Incorrect username or password. Please try again.");
-    } finally {
+      throw new Error("Error Login Api.");
     }
   };
 
+  const refreshTokenState = async () => {
+    const localRefreshToken = localStorage.getItem("refreshToken");
+
+    if (!localRefreshToken) {
+      setIsAuthReady(true);
+      return;
+    }
+
+    try {
+      const response = await API.post(`/auth/refresh`, {
+        refreshToken: localRefreshToken,
+      });
+
+      const {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: userData,
+      } = response.data;
+
+      if (newAccessToken && newRefreshToken) {
+        setAccessToken(newAccessToken);
+        setUser(userData || user);
+        setIsAuthenticated(true);
+        localStorage.setItem("refreshToken", newRefreshToken);
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        API.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${newAccessToken}`;
+      } else {
+        throw new Error("Invalid refresh response");
+      }
+    } catch (error) {
+      setAccessToken("");
+      setIsAuthenticated(false);
+      setUser({ email: "", password: "" });
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      console.log("Refresh token invalid or expired:", error);
+    } finally {
+      setIsAuthReady(true);
+    }
+  };
+
+  const logoutApi = () => {
+    setAccessToken("");
+    setIsAuthenticated(false);
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
+    delete API.defaults.headers.common["Authorization"];
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isMounted) {
+      const localRefreshToken = localStorage.getItem("refreshToken");
+      if (!localRefreshToken) {
+        setIsAuthReady(true);
+        return;
+      } else {
+        refreshTokenState();
+      }
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loginApi }}>
-      {children}
+    <AuthContext.Provider
+      value={{ user, loginApi, logoutApi, isAuthReady, isAuthenticated }}
+    >
+      {isAuthReady ? children : <div>Loading...</div>}
     </AuthContext.Provider>
   );
 };

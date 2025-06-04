@@ -1,12 +1,40 @@
-import Image from "next/image"
-import LoginForm from "@/components/login-form"
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import Image from "next/image";
+import LoginForm from "@/components/login-form";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { isAuthenticated, isAuthReady } = useAuth();
+
+  useEffect(() => {
+    if (isAuthReady && isAuthenticated) {
+      router.replace("/admin/dashboard");
+    }
+  }, [isAuthReady, isAuthenticated, router]);
+
+  if (!isAuthReady) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col min-h-screen w-full bg-[#F1F5F9]">
       {/* Logo in top left */}
       <div className="p-6 pt-8">
-        <Image src="/logo.png" alt="eventura" width={120} height={84} priority />
+        <Image
+          src="/logo.png"
+          alt="eventura"
+          width={120}
+          height={84}
+          priority
+        />
       </div>
 
       {/* Login form centered but moved up a bit */}
@@ -25,5 +53,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

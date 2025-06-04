@@ -3,17 +3,13 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginForm() {
-  const router = useRouter();
-  const { setUser, loginApi } = useAuth();
+  const { loginApi } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState<"admin" | "superAdmin">(
-    "superAdmin"
-  );
+  const [loginType, setLoginType] = useState<"admin" | "superAdmin">("admin");
   const [formValues, setFormValues] = useState({
     username: "",
     email: "",
@@ -69,12 +65,10 @@ export default function LoginForm() {
 
   const handleLogin = () => {
     loginApi(formValues);
-    console.log("login page");
+    // console.log("login page");
 
     // router.push(`/${loginType}/dashboard`);
   };
-
-  console.log("formValues:", formValues);
 
   return (
     <div className="flex flex-col flex-1 p-7 items-center pt-12">

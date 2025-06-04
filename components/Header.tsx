@@ -1,5 +1,5 @@
 "use client";
-import { useAdmin } from "@/app/context/adminContext";
+import { useAdmin } from "@/app/context/AdminContext";
 import {
   ArrowDownCircle,
   BellDot,

@@ -2,10 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-interface Event {
-  title: string;
+export interface EventProps {
+  name: string;
   img: string;
-  date: { month: string; day: string };
+  date: any;
   venue: string;
   time: string;
   price: number;
@@ -14,11 +14,26 @@ interface Event {
 }
 
 interface EventCardProps {
-  events: Event[];
+  events: EventProps[];
   onSeeMore?: () => void;
   isExpanded?: boolean;
   showSeeMoreButton: boolean;
 }
+
+const month = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sept",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export default function EventCard({
   events,
@@ -26,24 +41,34 @@ export default function EventCard({
   isExpanded,
   showSeeMoreButton,
 }: EventCardProps) {
+  const convertTo12Hour = (time24: string) => {
+    const [hourStr, minuteStr] = time24.split(":");
+    let hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12; // Convert 0 to 12 for midnight
+
+    return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+  };
+
   return (
     <div>
-      <div className="grid grid-cols-2 gap-14">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-14">
         {events.map(
           (
-            { title, img, date, venue, time, price, interested, category },
+            { name, img, date, venue, time, price, interested, category },
             index
           ) => (
             <Link href={`/event/detail`} key={index}>
               {" "}
-              {/* This is the Link to your event detail page */}
               <div className="rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition">
                 {/* Image */}
                 <div className="relative">
                   <div>
                     <Image
                       src={`/assets/images/${img}`}
-                      alt={`${title} img`}
+                      alt={`${name} img`}
                       width={400}
                       height={200}
                       className="w-full h-48 object-cover"
@@ -60,17 +85,28 @@ export default function EventCard({
 
                 {/* Card Content */}
                 <div className="p-4">
-                  {/* Date and Title */}
                   <div className="flex gap-4 items-start">
                     <div className="text-center">
-                      <div className="text-md font-semibold text-purple-800">
-                        {date.month}
+                      {/* month */}
+                      {Array.isArray(date) && date.length === 3 ? (
+                        <>
+                          <div className="text-md font-semibold text-purple-800">
+                            {month[parseInt(date[1], 10) - 1]}
+                          </div>
+                          <div className="text-xl font-bold">{date[2]}</div>
+                        </>
+                      ) : (
+                        <div className="text-gray-400">Invalid date</div>
+                      )}
+
+                      <div className="text-xl font-bold">
+                        {/* day */}
+                        {date[3]}
                       </div>
-                      <div className="text-xl font-bold">{date.day}</div>
                     </div>
                     <div>
                       <h3 className="text-md font-semibold leading-tight">
-                        {title}
+                        {name}
                       </h3>
                       <p className="text-sm text-gray-500 mt-1">{venue}</p>
                     </div>
@@ -79,7 +115,7 @@ export default function EventCard({
                   {/* Time, Price, Interested */}
                   <div className="flex sm:flex-col sm:items-start 2xl:flex-row justify-between items-center mt-4 text-sm text-gray-600">
                     <div>
-                      <p>{time}</p>
+                      <p>{convertTo12Hour(time)}</p>
                     </div>
                     <div className="flex gap-2">
                       <span>$ {price}</span>
