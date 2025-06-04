@@ -6,7 +6,7 @@ import { getEvents } from "@/app/(api)/events";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-// const events1 = [
+// const events = [
 //   {
 //     name: "Event Summer Festival",
 //     img: "summer.png",
@@ -30,9 +30,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 // ];
 
 export default function page() {
-  const queryClient = useQueryClient();
-  const [events, setEvents] = useState<any[]>([]);
-
   const { data, isLoading, isError } = useQuery({
     queryKey: ["events"],
     queryFn: getEvents,
@@ -71,7 +68,7 @@ export default function page() {
       </div>
 
       <EventCard events={data ?? []} showSeeMoreButton={false} />
-      {/* <EventCard events={events1} showSeeMoreButton={false} /> */}
+      {/* <EventCard events={events} showSeeMoreButton={false} /> */}
     </div>
   );
 }
