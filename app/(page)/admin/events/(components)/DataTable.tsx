@@ -1,58 +1,189 @@
 "use client";
+
+import { EventProps } from "@/app/(api)/events_api";
+import { VolunteerProps } from "@/app/(api)/volunteers_api";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronRight, House, MoreVertical } from "lucide-react";
+import { ChevronRight, Home, House, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-interface DataRow {
-  [key: string]: string;
+type DataType = "event" | "volunteer" | "attendance" | "volunteer1";
+
+interface AttendanceProps {
+  userId: string;
+  eventId: string;
+  status: string;
+  registeredAt: string;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    gender: string;
+    age: number;
+    org: string;
+    currentRole: string;
+  };
 }
 
 interface DataTableProps {
-  headers: string[];
-  rows: DataRow[];
+  rows: EventProps[] | VolunteerProps[] | AttendanceProps[];
   title: string;
   filterStatus?: string;
   showStatusToggle?: boolean;
+  dataType: DataType;
 }
 
+const headersMap: Record<DataType, string[]> = {
+  event: [
+    "No.",
+    "ID",
+    "Name",
+    "Description",
+    "Location",
+    "Date",
+    "Time",
+    "Organizer",
+  ],
+  volunteer: ["No.", "ID", "Name", "Gender", "Date", ""],
+  attendance: [
+    "No.",
+    "User ID",
+    "Full Name",
+    "Email",
+    "Gender",
+    "Status",
+    "Registered At",
+  ],
+  volunteer1: ["No.", "Name", "Date", "Status", "Event", "Type", ""],
+};
+
 export default function DataTable({
-  headers,
   rows,
   title,
   filterStatus,
   showStatusToggle,
+  dataType,
 }: DataTableProps) {
   const [showAttendingOnly, setShowAttendingOnly] = useState(
-    showStatusToggle ? true : false
+    showStatusToggle ? false : true
   );
   const [search, setSearch] = useState("");
 
-  const filtered = rows.filter((a) => {
+  const filtered = rows.filter((row) => {
+    let name = "";
+    if (dataType === "event") name = (row as EventProps).name;
+    else if (dataType === "volunteer") name = (row as VolunteerProps).name;
+    else if (dataType === "volunteer1") name = (row as VolunteerProps).name;
+    else name = (row as AttendanceProps).user.fullName;
+
     const matchStatus =
       showStatusToggle && showAttendingOnly
-        ? a.status === (filterStatus || "Attending")
+        ? row.status === (filterStatus || "Attending")
         : true;
 
-    const matchSearch = (a.name || a.title || "")
-      .toLowerCase()
-      .includes(search.toLowerCase());
-
+    const matchSearch = name.toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
+  const renderRow = (row: any, index: number) => {
+    switch (dataType) {
+      case "event":
+        const e = row as EventProps;
+        return (
+          <>
+            <td className="py-2 px-2">{index + 1}</td>
+            <td className="py-2 px-2">{e.id}</td>
+            <td className="py-2 px-2">{e.name}</td>
+            <td className="py-2 px-2">{e.description}</td>
+            <td className="py-2 px-2">{e.venue}</td>
+            <td className="py-2 px-2">{e.date}</td>
+            <td className="py-2 px-2">{e.time}</td>
+            <td className="py-2 px-2">{e.organizer}</td>
+          </>
+        );
+      case "volunteer":
+        const v = row as VolunteerProps;
+        return (
+          <>
+            <td className="py-2 px-2">{index + 1}</td>
+            <td className="py-2 px-2">{v.id}</td>
+            <td className="py-2 px-2">{v.name}</td>
+            <td className="py-2 px-2">{v.event?.status || "-"}</td>
+            <td className="py-2 px-2">{v.appliedAt}</td>
+            <td className="py-2 px-2">
+              <MoreVertical className="w-4 h-4 cursor-pointer" />
+            </td>
+          </>
+        );
+      case "volunteer1":
+        const b = row as VolunteerProps;
+        return (
+          <>
+            <td className="py-2 px-2">{index + 1}</td>
+            <td className="py-2 px-2">{b.name}</td>
+            <td className="py-2 px-2">{b.appliedAt}</td>
+            <td className="py-2">
+              <span
+                className={`px-2 py-2 rounded-full text-xs font-medium ${
+                  b.status === "PUBLISHED"
+                    ? "bg-green-100 text-green-600"
+                    : "bg-orange-100 text-orange-600"
+                }`}
+              >
+                {b.status}
+              </span>
+            </td>
+            <td className="py-2 px-2">{b.event.name}</td>
+            <td className="py-2 px-2">{b.cvPath}</td>
+            <td className="py-2 px-2">
+              <MoreVertical className="w-4 h-4 cursor-pointer" />
+            </td>
+          </>
+        );
+
+      case "attendance":
+        const a = row as AttendanceProps;
+        return (
+          <>
+            <td className="py-2 px-2">{index + 1}</td>
+            <td className="py-2 px-2">{a.userId}</td>
+            <td className="py-2 px-2">{a.user.fullName}</td>
+            <td className="py-2 px-2">{a.user.email}</td>
+            <td className="py-2 px-2">{a.user.gender}</td>
+            <td className="py-2 px-2">
+              {a.status === "JOINED" ? (
+                <span className="text-green-600">Joined</span>
+              ) : (
+                <span className="text-orange-500">{a.status}</span>
+              )}
+            </td>
+            <td className="py-2 px-2">{a.registeredAt}</td>
+          </>
+        );
+      default:
+        return <td colSpan={8}>Unsupported type</td>;
+    }
+  };
+
   return (
     <div>
-      <div className="flex justify-between ">
-        <div className="flex gap-1 justify-center items-center text-sm text-muted-foreground mb-2">
-          <Link href="/events/" className="flex items-center">
-            <House size={18} className="mr-1" />
-            <p>Events</p>
-          </Link>
-          <ChevronRight size={18} />
-          <p>{title}</p>
-        </div>
+      <div className="flex justify-between">
+        {title !== "" ? (
+          <div className="flex gap-1 justify-center items-center text-sm text-muted-foreground mb-2">
+            <Link href="/admin/events/" className="flex items-center">
+              <Home size={14} className="mr-1" />
+              <p>Events</p>
+            </Link>
+            <ChevronRight size={18} />
+            <p>{title}</p>
+          </div>
+        ) : (
+          <div className="flex justify-center items-center mb-4">
+            Show Volunteers
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-4">
           <div className="flex gap-4 items-center">
             {showStatusToggle && (
@@ -70,14 +201,11 @@ export default function DataTable({
                 />
               </>
             )}
-
             <Input
               type="text"
               placeholder="Search"
               value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               className="w-48"
             />
           </div>
@@ -87,7 +215,7 @@ export default function DataTable({
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="border-b text-muted-foreground bg-gray-200">
-            {headers.map((header, index) => (
+            {headersMap[dataType].map((header, index) => (
               <th key={index} className="py-2 px-2 text-black">
                 {header}
               </th>
@@ -97,22 +225,7 @@ export default function DataTable({
         <tbody>
           {filtered.map((row, index) => (
             <tr key={index} className="border-b hover:bg-muted/30">
-              <td className="py-2 px-2">{index + 1}</td>
-              {headers.slice(1).map((header, i) => (
-                <td key={i} className="py-2 px-2">
-                  {header === "Status" ? (
-                    row.status === "Attending" ? (
-                      <span className="text-green-600">Attending</span>
-                    ) : (
-                      <span className="text-orange-500">Interested</span>
-                    )
-                  ) : header === "..." ? (
-                    <MoreVertical className="w-4 h-4 cursor-pointer" />
-                  ) : (
-                    row[header.toLowerCase()] || "-"
-                  )}
-                </td>
-              ))}
+              {renderRow(row, index)}
             </tr>
           ))}
         </tbody>

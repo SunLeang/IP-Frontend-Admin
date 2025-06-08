@@ -1,17 +1,7 @@
 "use client";
+import { EventProps } from "@/app/(api)/events_api";
 import Image from "next/image";
 import Link from "next/link";
-
-export interface EventProps {
-  name: string;
-  img: string;
-  date: any;
-  venue: string;
-  time: string;
-  price: number;
-  interested: number;
-  category: string;
-}
 
 interface EventCardProps {
   events: EventProps[];
@@ -41,23 +31,12 @@ export default function EventCard({
   isExpanded,
   showSeeMoreButton,
 }: EventCardProps) {
-  const convertTo12Hour = (time24: string) => {
-    const [hourStr, minuteStr] = time24.split(":");
-    let hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-
-    const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 || 12; // Convert 0 to 12 for midnight
-
-    return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
-  };
-
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-14">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-14">
         {events.map(
           (
-            { name, img, date, venue, time, price, interested, category },
+            { name, coverImage, date, venue, time, price, _count, category },
             index
           ) => (
             <Link href={`/event/detail`} key={index}>
@@ -67,14 +46,14 @@ export default function EventCard({
                 <div className="relative">
                   <div>
                     <Image
-                      src={`/assets/images/${img}`}
+                      src={`/assets/images/${coverImage}`}
                       alt={`${name} img`}
                       width={400}
                       height={200}
                       className="w-full h-48 object-cover"
                     />
                     <div className="absolute bottom-0 bg-orange-300 text-sm text-white px-2 py-1">
-                      {category}
+                      {category.name}
                     </div>
                   </div>
                   {/* Top-right Save Icon */}
@@ -115,11 +94,11 @@ export default function EventCard({
                   {/* Time, Price, Interested */}
                   <div className="flex sm:flex-col sm:items-start 2xl:flex-row justify-between items-center mt-4 text-sm text-gray-600">
                     <div>
-                      <p>{convertTo12Hour(time)}</p>
+                      <p>{time}</p>
                     </div>
                     <div className="flex gap-2">
                       <span>$ {price}</span>
-                      <span>💙 {interested} interested</span>
+                      <span>💙 {_count.interestedUsers} interested</span>
                     </div>
                   </div>
                 </div>

@@ -1,33 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import EventCard from "./EventCard";
-import { getEvents } from "@/app/(api)/events";
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
-// const events = [
-//   {
-//     name: "Event Summer Festival",
-//     img: "summer.png",
-//     date: { month: "NOV", day: "22" },
-//     venue: "Venue",
-//     time: "00:00 AM - 00:00 PM",
-//     price: 4.99,
-//     interested: 10,
-//     category: "Entertainment",
-//   },
-//   {
-//     name: "Event Prom Night",
-//     img: "prom.png",
-//     date: { month: "NOV", day: "22" },
-//     venue: "Venue",
-//     time: "00:00 AM - 00:00 PM",
-//     price: 4.99,
-//     interested: 10,
-//     category: "Entertainment",
-//   },
-// ];
+import EventCard from "./(components)/EventCard";
+import { getEvents } from "@/app/(api)/events_api";
+import { useQuery } from "@tanstack/react-query";
+import { getVolunteers } from "@/app/(api)/volunteers_api";
+import Loading from "./(components)/Loading";
+import ErrorMessage from "./(components)/ErrorMessage";
 
 export default function page() {
   const { data, isLoading, isError } = useQuery({
@@ -35,6 +14,9 @@ export default function page() {
     queryFn: getEvents,
     select: (res) => res.data,
   });
+
+  if (isLoading) return <Loading message="Loading..." />;
+  if (isError) return <ErrorMessage message="Failed to load Event Page." />;
 
   return (
     <div className="mr-10">
@@ -44,7 +26,7 @@ export default function page() {
           <button
             className="bg-red-500 text-white border rounded-lg px-2 py-1"
             onClick={async () => {
-              console.log(await getEvents());
+              await getVolunteers();
               // console.log("_counts:", data.data);
             }}
           >
@@ -52,14 +34,14 @@ export default function page() {
           </button>
 
           <Link
-            href="/admin/events/lists/details"
+            href="/admin/events/lists/events"
             className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
           >
             Event Lists
           </Link>
 
           <Link
-            href="/admin/events/create_event/details"
+            href="/admin/events/create_event/event"
             className="text-primaryblue border border-primaryblue rounded-lg px-2 py-1"
           >
             Create Event
