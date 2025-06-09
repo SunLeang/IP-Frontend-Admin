@@ -1,5 +1,6 @@
 "use client";
 import { EventProps } from "@/app/(api)/events_api";
+import { Star, StarIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -36,12 +37,22 @@ export default function EventCard({
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-14">
         {events.map(
           (
-            { name, coverImage, date, venue, time, price, _count, category },
+            {
+              id,
+              name,
+              coverImage,
+              date,
+              venue,
+              time,
+              price,
+              _count,
+              category,
+            },
             index
           ) => (
-            <Link href={`/event/detail`} key={index}>
+            <Link href={`/admin/events/${id}`} key={index}>
               {" "}
-              <div className="rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition">
+              <div className="bg-white rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition">
                 {/* Image */}
                 <div className="relative">
                   <div>
@@ -57,14 +68,14 @@ export default function EventCard({
                     </div>
                   </div>
                   {/* Top-right Save Icon */}
-                  <div className="absolute top-2 right-2 bg-white px-1 rounded-full shadow">
-                    <span>☆</span>
+                  <div className="absolute top-2 right-2 bg-white px-1 py-1 rounded-full shadow">
+                    <StarIcon size={12} color="black" />
                   </div>
                 </div>
 
                 {/* Card Content */}
                 <div className="p-4">
-                  <div className="flex gap-4 items-start">
+                  <div className="flex gap-4 items-start h-16">
                     <div className="text-center">
                       {/* month */}
                       {Array.isArray(date) && date.length === 3 ? (

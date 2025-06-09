@@ -23,7 +23,7 @@ export default function page() {
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-semibold">Events</h2>
         <div className="flex gap-4">
-          <button
+          {/* <button
             className="bg-red-500 text-white border rounded-lg px-2 py-1"
             onClick={async () => {
               await getVolunteers();
@@ -31,7 +31,7 @@ export default function page() {
             }}
           >
             Console Log
-          </button>
+          </button> */}
 
           <Link
             href="/admin/events/lists/events"
