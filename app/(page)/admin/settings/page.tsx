@@ -1,29 +1,37 @@
-"use client"
-import React, { useState } from 'react';
-import { Camera } from 'lucide-react';
+"use client";
+import React, { useState } from "react";
+import { Camera } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getProfile } from "@/app/(api)/profile_api";
 
 export default function ProfileSettings() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
+    select: (res) => res.data,
+  });
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    website: '',
-    company: '',
-    phoneNumber: '',
-    address: '',
-    city: '',
-    country: '',
-    pincode: '',
+    firstName: "",
+    lastName: "",
+    website: "",
+    company: "",
+    phoneNumber: "",
+    address: "",
+    city: "",
+    country: "",
+    pincode: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form submitted:', formData);
+
+    console.log("Form submitted:", formData);
   };
 
   return (
@@ -34,8 +42,16 @@ export default function ProfileSettings() {
         <div className="flex justify-center">
           <div className="relative">
             <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
-              <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              <svg
+                className="w-16 h-16 text-gray-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full border border-gray-300">
@@ -100,7 +116,10 @@ export default function ProfileSettings() {
         {/* Contact Details Section */}
         <div className="mb-8">
           <h3 className="text-xl font-semibold mb-2">Contact Details</h3>
-          <p className="text-sm text-gray-600 mb-4">These details are private and only used to contact you for ticketing or prizes.</p>
+          <p className="text-sm text-gray-600 mb-4">
+            These details are private and only used to contact you for ticketing
+            or prizes.
+          </p>
           <div className="grid grid-cols-1 gap-4">
             <div className="flex items-center">
               <label className="w-32 text-gray-700">Phone Number:</label>
@@ -172,4 +191,4 @@ export default function ProfileSettings() {
       </form>
     </div>
   );
-};
+}

@@ -11,7 +11,7 @@ import AnnouncementList from "./(components)/AnnouncementList";
 
 export default function page() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["events"],
+    queryKey: ["announcements"],
     queryFn: getAnnouncementsByEventId,
     select: (res) => res,
   });

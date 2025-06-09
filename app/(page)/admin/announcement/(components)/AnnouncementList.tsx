@@ -13,7 +13,7 @@ export default function AnnouncementList({
   onDelete,
 }: AnnouncementListProps) {
   return (
-    <div className="grid grid-cols-2 justify-center items-center">
+    <div className="grid grid-cols-2">
       {data &&
         data.map((announcement) => (
           <div
