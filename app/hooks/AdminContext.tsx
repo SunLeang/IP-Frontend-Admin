@@ -1,7 +1,6 @@
 "use client";
-import axios from "axios";
-import { stringify } from "querystring";
 import React, { createContext, ReactNode, useContext, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 interface AdminContextProps {
   isActiveSidebar: Boolean;
@@ -16,7 +15,7 @@ interface AdminProviderProps {
 interface UserProps {
   id?: string;
   email: string;
-  username: string;
+  username?: string;
   fullName?: string;
   password: string;
   systemRole: string;
@@ -34,12 +33,7 @@ export function useAdmin() {
 }
 
 export default function AdminProvider({ children }: AdminProviderProps) {
-  const [user, setUser] = useState({
-    username: "Wathrak",
-    email: "wathrak1@gmail.com",
-    password: "123456",
-    systemRole: "Admin",
-  });
+  const { user } = useAuth();
   const [isActiveSidebar, setIsActiveSidebar] = useState(true);
 
   return (

@@ -1,6 +1,6 @@
 "use client";
+
 import AdminProvider from "@/app/hooks/AdminContext";
-import { AuthProvider } from "@/app/hooks/AuthContext";
 import AuthGuard from "@/app/hooks/AuthGuard";
 import Header from "@/components/header";
 import Sidebar from "@/components/sidebar";
@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
-export default function AdminLayout({
+export default function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode;

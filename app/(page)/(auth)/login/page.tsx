@@ -2,17 +2,19 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/hooks/AuthContext";
 import Image from "next/image";
 import LoginForm from "@/components/login-form";
+import { useRolePrefix } from "@/app/hooks/RolePrefix";
 
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, isAuthReady } = useAuth();
+  const rolePrefix = useRolePrefix();
 
   useEffect(() => {
     if (isAuthReady && isAuthenticated) {
-      router.replace("/admin/dashboard");
+      router.replace(`/${rolePrefix}/dashboard`);
     }
   }, [isAuthReady, isAuthenticated, router]);
 

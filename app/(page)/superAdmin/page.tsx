@@ -1,6 +1,6 @@
 "use client";
+import { useRolePrefix } from "@/app/hooks/RolePrefix";
 import { redirect } from "next/navigation";
-import { useRolePrefix } from "./hooks/RolePrefix";
 
 export default function Home() {
   const rolePrefix = useRolePrefix();

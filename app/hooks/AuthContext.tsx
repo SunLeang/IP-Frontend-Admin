@@ -19,7 +19,7 @@ interface UserProps {
   username?: string;
   fullName?: string;
   password: string;
-  systemRole?: string;
+  systemRole: string;
   currentRole?: string;
 }
 
@@ -39,10 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string>("");
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<UserProps>({
-    email: "",
-    password: "",
-  });
+  const [user, setUser] = useState<UserProps>(undefined as any);
 
   const loginApi = async (user: UserProps) => {
     try {
@@ -55,14 +52,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (userData && accessToken && refreshToken) {
         setUser(userData);
+        console.log("User set in context login:", userData);
 
-        localStorage.setItem("refreshToken", refreshToken);
         setAccessToken(accessToken);
         setIsAuthenticated(true);
 
+        localStorage.setItem("refreshToken", refreshToken);
+
         API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
-        router.push("/admin/dashboard");
+        // console.log("Role:" + userData.systemRole);
+
+        if (userData.systemRole === "SUPER_ADMIN") {
+          router.push("/superAdmin/dashboard");
+        } else if (userData.systemRole === "ADMIN") {
+          router.push("/admin/dashboard");
+        }
       } else {
         throw new Error("Login failed");
       }
@@ -84,15 +89,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         refreshToken: localRefreshToken,
       });
 
+      // console.log("REFRESH response data:", response.data);
+
       const {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
         user: userData,
       } = response.data;
 
+      // console.log("User data from refresh:", userData);
+
       if (newAccessToken && newRefreshToken) {
         setAccessToken(newAccessToken);
-        setUser(userData || user);
+        setUser(userData);
+        // console.log("User set in context refresh:", userData);
+
         setIsAuthenticated(true);
         localStorage.setItem("refreshToken", newRefreshToken);
         localStorage.setItem("user", JSON.stringify(userData));
@@ -106,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       setAccessToken("");
       setIsAuthenticated(false);
-      setUser({ email: "", password: "" });
+      setUser({ email: "", password: "", systemRole: "" });
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
       console.log("Refresh token invalid or expired:", error);
@@ -126,15 +137,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
-    if (isMounted) {
+
+    async function initAuth() {
       const localRefreshToken = localStorage.getItem("refreshToken");
+
       if (!localRefreshToken) {
         setIsAuthReady(true);
         return;
-      } else {
-        refreshTokenState();
+      }
+
+      try {
+        await refreshTokenState();
+      } catch (error) {
+        setAccessToken("");
+        setIsAuthenticated(false);
+        setUser({ email: "", password: "", systemRole: "" });
+        localStorage.removeItem("refreshToken");
+        delete API.defaults.headers.common["Authorization"];
+      } finally {
+        setIsAuthReady(true);
       }
     }
+
+    initAuth();
+
     return () => {
       isMounted = false;
     };

@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/hooks/AuthContext";
 
 export default function LoginForm() {
   const { loginApi } = useAuth();
@@ -64,7 +64,10 @@ export default function LoginForm() {
   };
 
   const handleLogin = () => {
-    loginApi(formValues);
+    loginApi({
+      ...formValues,
+      systemRole: loginType === "admin" ? "admin" : "superAdmin",
+    });
     // console.log("login page");
 
     // router.push(`/${loginType}/dashboard`);

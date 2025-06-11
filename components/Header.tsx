@@ -1,5 +1,5 @@
 "use client";
-import { useAdmin } from "@/app/context/AdminContext";
+import { useAdmin } from "@/app/hooks/AdminContext";
 import {
   ArrowDownCircle,
   BellDot,

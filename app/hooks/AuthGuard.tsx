@@ -13,11 +13,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthReady, isAuthenticated, router]);
 
-  if (!isAuthReady) return null;
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthReady || !isAuthenticated) return null;
 
   return <>{children}</>;
 }

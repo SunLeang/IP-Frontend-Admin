@@ -14,52 +14,79 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card title="Total Attendee" value="40,689" growth="+8.5%" note="Up from yesterday" icon="🧍" color="text-green-500" />
-        <Card title="Total Volunteer" value="10,293" growth="+1.3%" note="Up from past week" icon="📦" color="text-green-500" />
-        <Card title="Total Event" value="2" growth="-4.3%" note="Down from yesterday" icon="📈" color="text-red-500" />
-        <Card title="Pending Volunteers" value="10" growth="+1.8%" note="Up from yesterday" icon="⏱️" color="text-green-500" />
+        <Card
+          title="Total Attendee"
+          value="40,689"
+          growth="+8.5%"
+          note="Up from yesterday"
+          icon="🧍"
+          color="text-green-500"
+        />
+        <Card
+          title="Total Volunteer"
+          value="10,293"
+          growth="+1.3%"
+          note="Up from past week"
+          icon="📦"
+          color="text-green-500"
+        />
+        <Card
+          title="Total Event"
+          value="2"
+          growth="-4.3%"
+          note="Down from yesterday"
+          icon="📈"
+          color="text-red-500"
+        />
+        <Card
+          title="Pending Volunteers"
+          value="10"
+          growth="+1.8%"
+          note="Up from yesterday"
+          icon="⏱️"
+          color="text-green-500"
+        />
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-md mb-6">
         <h2 className="text-lg font-semibold mb-4">Statistic Event Details</h2>
         <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-      <div className="flex items-center mb-4">
-        <PieChart className="h-5 w-5 text-blue-600 mr-10 justify-between-center " />
-       
+          <div className="flex items-center mb-4">
+            <PieChart className="h-5 w-5 text-blue-600 mr-10 justify-between-center " />
+          </div>
+        </div>
+
+        <table className="w-full text-sm text-left border-separate border-spacing-y-2">
+          <thead className="text-gray-600">
+            <tr>
+              <th className="p-2">No.</th>
+              <th className="p-2">Event</th>
+              <th className="p-2">Attendee</th>
+              <th className="p-2">Volunteer</th>
+              <th className="p-2">Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            <EventRow
+              number={1}
+              name="Songkran"
+              attendee="121/121"
+              volunteer="10/10"
+              progress={100}
+              status="Full"
+            />
+            <EventRow
+              number={2}
+              name="BookFair"
+              attendee="113/220"
+              volunteer="18/20"
+              progress={56}
+              status="Pending"
+            />
+          </tbody>
+        </table>
       </div>
-    </div>
-             
-  <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-    <thead className="text-gray-600">
-      <tr>
-        <th className="p-2">No.</th>
-        <th className="p-2">Event</th>
-        <th className="p-2">Attendee</th>
-        <th className="p-2">Volunteer</th>
-        <th className="p-2">Progress</th>
-      </tr>
-    </thead>
-    <tbody>
-      <EventRow
-        number={1}
-        name="Songkran"
-        attendee="121/121"
-        volunteer="10/10"
-        progress={100}
-        status="Full"
-      />
-      <EventRow
-        number={2}
-        name="BookFair"
-        attendee="113/220"
-        volunteer="18/20"
-        progress={56}
-        status="Pending"
-      />
-    </tbody>
-  </table>
-      </div>
-      
+
       {/* <div>
         dashboard
 
@@ -69,7 +96,6 @@ const Dashboard = () => {
 
         
       </div> */}
-
 
       <div className="bg-white p-4 rounded-lg shadow-md">
         <h2 className="text-lg font-semibold mb-4">Event Details</h2>
@@ -84,8 +110,20 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody>
-            <EventDetailRow name="Songkran" location="Aeon Mall Sensok" date="12.09.2025 - 12.53 PM" attendee="121/121" status="Full" />
-            <EventDetailRow name="BookFair" location="Institute of Technology of Cambodia" date="12.09.2025 - 12.53 PM" attendee="113/220" status="Pending" />
+            <EventDetailRow
+              name="Songkran"
+              location="Aeon Mall Sensok"
+              date="12.09.2025 - 12.53 PM"
+              attendee="121/121"
+              status="Full"
+            />
+            <EventDetailRow
+              name="BookFair"
+              location="Institute of Technology of Cambodia"
+              date="12.09.2025 - 12.53 PM"
+              attendee="113/220"
+              status="Pending"
+            />
           </tbody>
         </table>
       </div>
@@ -101,7 +139,9 @@ const Card = ({ title, value, growth, note, icon, color }: any) => (
       <span className="text-xl">{icon}</span>
     </div>
     <div className="text-2xl font-bold">{value}</div>
-    <div className={`text-sm ${color}`}>{growth} {note}</div>
+    <div className={`text-sm ${color}`}>
+      {growth} {note}
+    </div>
   </div>
 );
 
@@ -114,7 +154,9 @@ const EventRow = ({ number, name, attendee, volunteer, progress }: any) => (
     <td>
       <div className="w-full bg-gray-200 rounded-full h-2.5">
         <div
-          className={`h-2.5 rounded-full ${progress === 100 ? 'bg-green-500' : 'bg-yellow-400'}`}
+          className={`h-2.5 rounded-full ${
+            progress === 100 ? "bg-green-500" : "bg-yellow-400"
+          }`}
           style={{ width: `${progress}%` }}
         ></div>
       </div>
@@ -129,7 +171,13 @@ const EventDetailRow = ({ name, location, date, attendee, status }: any) => (
     <td>{date}</td>
     <td>{attendee}</td>
     <td>
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status === "Full" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+          status === "Full"
+            ? "bg-green-100 text-green-700"
+            : "bg-yellow-100 text-yellow-700"
+        }`}
+      >
         {status}
       </span>
     </td>

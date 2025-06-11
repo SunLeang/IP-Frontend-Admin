@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Heart,
   Settings,
@@ -12,68 +12,23 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAdmin } from "@/app/context/AdminContext";
+import { useAdmin } from "@/app/hooks/AdminContext";
+import { useAuth } from "@/app/hooks/AuthContext";
 import LogoutAlert from "./logout-alert";
-import { useAuth } from "@/app/context/AuthContext";
+import { useRolePrefix } from "@/app/hooks/RolePrefix";
 
-type SidebarProps = {
-  children?: React.ReactNode;
-};
-
-const navItems = [
-  {
-    label: "Dashboard",
-    icon: <CircleGauge className="w-5 h-5" />,
-    href: "/admin/dashboard",
-  },
-  {
-    label: "Event",
-    icon: <Grid2X2 className="w-5 h-5" />,
-    href: "/admin/events",
-  },
-  {
-    label: "Volunteer",
-    icon: <Heart className="w-5 h-5" />,
-    href: "/admin/volunteer",
-  },
-  {
-    label: "Announcement",
-    icon: <MessagesSquare className="w-5 h-5" />,
-    href: "/admin/announcement",
-  },
-];
-
-const settingsItems = [
-  {
-    label: "Settings",
-    icon: <Settings className="w-5 h-5" />,
-    href: "/admin/settings",
-  },
-  {
-    label: "Logout",
-    icon: <Power className="w-5 h-5" />,
-    action: "logout",
-  },
-];
-
-const Sidebar: React.FC<SidebarProps> = ({ children }) => {
+export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const rolePrefix = useRolePrefix();
 
   const [mounted, setMounted] = useState(false);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
-  const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
-  const { logoutApi, isAuthenticated, user } = useAuth();
+  const { isActiveSidebar } = useAdmin();
+  const { logoutApi, isAuthReady, isAuthenticated, user } = useAuth();
 
-  // const user = {
-  //   username: "Wathrak",
-  //   email: "wathrak1@gmail.com",
-  //   systemRole: "Admin",
-  // };
-
-  const isActiveTab = (href: string) =>
-    pathname === href || pathname.startsWith("admin" + href + "/");
+  const isActiveTab = (href: string) => pathname.startsWith(href);
 
   const handleLogout = () => {
     logoutApi();
@@ -85,7 +40,51 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
     setMounted(true);
   }, []);
 
+  const navItems = useMemo(
+    () => [
+      {
+        label: "Dashboard",
+        icon: <CircleGauge className="w-5 h-5" />,
+        href: `/${rolePrefix}/dashboard`,
+      },
+      {
+        label: "Event",
+        icon: <Grid2X2 className="w-5 h-5" />,
+        href: `/${rolePrefix}/events`,
+      },
+      {
+        label: "Volunteer",
+        icon: <Heart className="w-5 h-5" />,
+        href: `/${rolePrefix}/volunteer`,
+      },
+      {
+        label: "Announcement",
+        icon: <MessagesSquare className="w-5 h-5" />,
+        href: `/${rolePrefix}/announcement`,
+      },
+    ],
+    [rolePrefix]
+  );
+
+  const settingsItems = useMemo(
+    () => [
+      {
+        label: "Settings",
+        icon: <Settings className="w-5 h-5" />,
+        href: `/${rolePrefix}/settings`,
+      },
+      {
+        label: "Logout",
+        icon: <Power className="w-5 h-5" />,
+        action: "logout",
+      },
+    ],
+    [rolePrefix]
+  );
+
   if (!mounted || !pathname) return null;
+
+  if (!isAuthReady || !isAuthenticated) return <div>Loading...</div>;
 
   return (
     <div className="flex bg-white">
@@ -98,15 +97,13 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
           <div className="space-y-2">
             {navItems.map((item) => (
               <Link
-                href={item.href}
                 key={item.label}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md w-full transition-colors
-                ${
+                href={item.href}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md w-full transition-colors ${
                   isActiveTab(item.href)
                     ? "bg-primaryblue text-white"
                     : "bg-white text-black hover:bg-blue-100"
-                }
-              `}
+                }`}
               >
                 {item.icon}
                 {item.label}
@@ -120,32 +117,27 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
             {settingsItems.map((item) =>
               item.href ? (
                 <Link
-                  href={item.href}
                   key={item.label}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md w-full transition-colors
-        ${
-          isActiveTab(item.href)
-            ? "bg-primaryblue text-white"
-            : "bg-white text-black hover:bg-blue-100"
-        }
-      `}
+                  href={item.href}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md w-full transition-colors ${
+                    isActiveTab(item.href)
+                      ? "bg-primaryblue text-white"
+                      : "bg-white text-black hover:bg-blue-100"
+                  }`}
                 >
                   {item.icon}
                   {item.label}
                 </Link>
-              ) : item.action === "logout" ? (
+              ) : (
                 <button
                   key={item.label}
-                  onClick={() => {
-                    setIsLogoutOpen(true);
-                    console.log(user);
-                  }}
+                  onClick={() => setIsLogoutOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-md w-full text-left transition-colors bg-white text-black hover:bg-red-100"
                 >
                   {item.icon}
                   {item.label}
                 </button>
-              ) : null
+              )
             )}
           </div>
         </div>
@@ -156,13 +148,14 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
               {(user?.username?.[0] ?? "").toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold">{user.username}</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
+              <p className="font-semibold">{user?.username}</p>
+              <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
           </div>
           <ChevronDown className="w-5 h-5 text-gray-500" />
         </div>
       </div>
+
       <LogoutAlert
         isOpen={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
@@ -170,6 +163,4 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
       />
     </div>
   );
-};
-
-export default Sidebar;
+}
