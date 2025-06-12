@@ -1,12 +1,14 @@
 "use client";
 
-import { EventProps } from "@/app/(api)/events_api";
+import { deleteEvent, EventProps } from "@/app/(api)/events_api";
 import { VolunteerProps } from "@/app/(api)/volunteers_api";
+import ConfirmPopup from "@/components/confirm-popup";
+import TaskBar from "@/components/taskBar";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronRight, Home, House, MoreVertical } from "lucide-react";
+import { ChevronRight, Home, MoreVertical } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type DataType = "event" | "volunteer" | "attendance" | "volunteer1";
 
@@ -32,6 +34,9 @@ interface DataTableProps {
   filterStatus?: string;
   showStatusToggle?: boolean;
   dataType: DataType;
+  onDelete?: (row: any) => void;
+  onView?: (row: any) => void;
+  showView?: boolean;
 }
 
 const headersMap: Record<DataType, string[]> = {
@@ -44,6 +49,7 @@ const headersMap: Record<DataType, string[]> = {
     "Date",
     "Time",
     "Organizer",
+    "",
   ],
   volunteer: ["No.", "ID", "Name", "Gender", "Date", ""],
   attendance: [
@@ -64,11 +70,20 @@ export default function DataTable({
   filterStatus,
   showStatusToggle,
   dataType,
+  onDelete,
+  onView,
+  showView,
 }: DataTableProps) {
   const [showAttendingOnly, setShowAttendingOnly] = useState(
     showStatusToggle ? false : true
   );
   const [search, setSearch] = useState("");
+  const [showTaskBar, setShowTaskBar] = useState(false);
+  const [popupPosition, setPopupPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [selectedRow, setSelectedRow] = useState<any | null>(null);
 
   const filtered = rows.filter((row) => {
     let name = "";
@@ -100,6 +115,19 @@ export default function DataTable({
             <td className="py-2 px-2">{e.date}</td>
             <td className="py-2 px-2">{e.time}</td>
             <td className="py-2 px-2">{e.organizer}</td>
+            <td>
+              <MoreVertical
+                className="mt-6 w-4 h-4 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const rect = (
+                    e.target as HTMLElement
+                  ).getBoundingClientRect();
+                  setPopupPosition({ x: rect.left - 140, y: rect.bottom });
+                  setSelectedRow(row);
+                }}
+              />
+            </td>
           </>
         );
       case "volunteer":
@@ -112,7 +140,10 @@ export default function DataTable({
             <td className="py-2 px-2">{v.event?.status || "-"}</td>
             <td className="py-2 px-2">{v.appliedAt}</td>
             <td className="py-2 px-2">
-              <MoreVertical className="w-4 h-4 cursor-pointer" />
+              <MoreVertical
+                className="mt-6 w-4 h-4 cursor-pointer"
+                onClick={() => setShowTaskBar(true)}
+              />
             </td>
           </>
         );
@@ -137,7 +168,10 @@ export default function DataTable({
             <td className="py-2 px-2">{b.event.name}</td>
             <td className="py-2 px-2">{b.cvPath}</td>
             <td className="py-2 px-2">
-              <MoreVertical className="w-4 h-4 cursor-pointer" />
+              <MoreVertical
+                className="mt-6 w-4 h-4 cursor-pointer"
+                onClick={() => setShowTaskBar(true)}
+              />
             </td>
           </>
         );
@@ -159,12 +193,24 @@ export default function DataTable({
               )}
             </td>
             <td className="py-2 px-2">{a.registeredAt}</td>
+            <td>
+              <MoreVertical
+                className="mt-6 w-4 h-4 cursor-pointer"
+                onClick={() => setShowTaskBar(true)}
+              />
+            </td>
           </>
         );
       default:
         return <td colSpan={8}>Unsupported type</td>;
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = () => setPopupPosition(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
 
   return (
     <div>
@@ -230,6 +276,35 @@ export default function DataTable({
           ))}
         </tbody>
       </table>
+
+      {popupPosition && selectedRow && (
+        <ConfirmPopup
+          position={popupPosition}
+          onOpenTask={() => {
+            setShowTaskBar(true);
+            setPopupPosition(null);
+          }}
+          onDelete={async () => {
+            if (selectedRow) {
+              try {
+                await deleteEvent(selectedRow.id);
+                console.log("Deleted event:", selectedRow.id);
+                onDelete?.(selectedRow);
+                setPopupPosition(null);
+              } catch (error) {
+                console.error("Delete failed:", error);
+              }
+            }
+          }}
+          onView={() => {
+            onView?.(selectedRow);
+          }}
+          showView={showView}
+          onCancel={() => setPopupPosition(null)}
+        />
+      )}
+
+      {showTaskBar && <TaskBar onClose={() => setShowTaskBar(false)} />}
     </div>
   );
 }

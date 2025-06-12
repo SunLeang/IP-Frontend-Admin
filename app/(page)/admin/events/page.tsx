@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import EventCard from "./(components)/EventCard";
-import { getEvents } from "@/app/(api)/events_api";
+import { EventProps, getEvents } from "@/app/(api)/events_api";
 import { useQuery } from "@tanstack/react-query";
 import { getVolunteers } from "@/app/(api)/volunteers_api";
 import Loading from "./(components)/Loading";
 import ErrorMessage from "./(components)/ErrorMessage";
+import { useEffect, useState } from "react";
 
 export default function page() {
   const { data, isLoading, isError } = useQuery({
@@ -14,6 +15,19 @@ export default function page() {
     queryFn: getEvents,
     select: (res) => res.data,
   });
+
+  const [events, setEvents] = useState<EventProps[]>(data ?? []);
+
+  const handleDelete = (deletedEvent: EventProps) => {
+    console.log("event before: " + events);
+    setEvents((prev) => prev.filter((e) => e.id !== deletedEvent.id));
+    console.log("event after: " + events);
+  };
+
+  useEffect(() => {
+    if (data) setEvents(data);
+    console.log(data);
+  }, [data]);
 
   if (isLoading) return <Loading message="Loading..." />;
   if (isError) return <ErrorMessage message="Failed to load Event Page." />;
@@ -49,8 +63,18 @@ export default function page() {
         </div>
       </div>
 
-      <EventCard events={data ?? []} showSeeMoreButton={false} />
-      {/* <EventCard events={events} showSeeMoreButton={false} /> */}
+      <EventCard
+        events={data ?? []}
+        showSeeMoreButton={false}
+        // onDelete={(row) => {
+        //   handleDelete(row);
+        //   console.log("row: " + row);
+        // }}
+        // onView={(row) => {
+        //   // console.log("View:", row.id);
+        // }}
+        showView={false}
+      />
     </div>
   );
 }

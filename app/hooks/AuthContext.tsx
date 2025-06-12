@@ -106,7 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         setIsAuthenticated(true);
         localStorage.setItem("refreshToken", newRefreshToken);
-        localStorage.setItem("user", JSON.stringify(userData));
 
         API.defaults.headers.common[
           "Authorization"
@@ -133,6 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
 
     delete API.defaults.headers.common["Authorization"];
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -153,6 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(false);
         setUser({ email: "", password: "", systemRole: "" });
         localStorage.removeItem("refreshToken");
+
         delete API.defaults.headers.common["Authorization"];
       } finally {
         setIsAuthReady(true);

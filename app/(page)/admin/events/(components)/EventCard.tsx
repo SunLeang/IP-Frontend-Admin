@@ -8,7 +8,10 @@ interface EventCardProps {
   events: EventProps[];
   onSeeMore?: () => void;
   isExpanded?: boolean;
-  showSeeMoreButton: boolean;
+  showSeeMoreButton?: boolean;
+  showView?: boolean;
+  onDelete?: (row: any) => void;
+  onView?: (row: any) => void;
 }
 
 const month = [

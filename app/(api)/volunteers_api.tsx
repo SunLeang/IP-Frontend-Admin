@@ -77,3 +77,20 @@ export async function createVolunteerEvent(data: CreateVolunteerPayload) {
     throw error;
   }
 }
+
+export async function deleteEventVolunteer(
+  eventId: string,
+  volunteerId: string
+) {
+  try {
+    const response = await API.delete(
+      `/volunteer/event/${eventId}/volunteers/&${volunteerId}`
+    );
+    window.location.reload();
+    return response;
+  } catch (error) {
+    console.error("Failed to delete event:", error);
+  } finally {
+    alert(`event: ${eventId} is deleted!`);
+  }
+}

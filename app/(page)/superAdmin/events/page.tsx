@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getVolunteers } from "@/app/(api)/volunteers_api";
 import Loading from "./(components)/Loading";
 import ErrorMessage from "./(components)/ErrorMessage";
-import { useRolePrefix } from "@/app/hooks/RolePrefix";
 
 export default function page() {
   const { data, isLoading, isError } = useQuery({
