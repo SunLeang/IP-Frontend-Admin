@@ -17,9 +17,9 @@ export interface AttendanceProps {
   };
 }
 
-export async function getEventAttendees(
-  eventId: string
-): Promise<AttendanceProps[]> {
+export async function getEventAttendees(): Promise<AttendanceProps[]> {
+  const eventId = "7dc32f18-71f6-4e7a-be82-eacf86e22e88";
+
   const res = await API.get(`/events/${eventId}/attendees`);
   const data = res.data.map((item: AttendanceProps) => ({
     ...item,

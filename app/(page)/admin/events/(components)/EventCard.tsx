@@ -53,9 +53,11 @@ export default function EventCard({
             },
             index
           ) => (
-            <Link href={`/admin/events/${id}`} key={index}>
-              {" "}
-              <div className="bg-white rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition">
+            <Link href={`/admin/events/${id}`}>
+              <div
+                key={index}
+                className="bg-white rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition"
+              >
                 {/* Image */}
                 <div className="relative">
                   <div>

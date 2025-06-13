@@ -1,5 +1,6 @@
 import { formatDateTime } from "@/components/formatDateTime";
 import API from "../utils/AxiosInstance";
+import axios from "axios";
 
 export interface VolunteerProps {
   id: string;
@@ -16,6 +17,14 @@ export interface VolunteerProps {
     name: string;
     dateTime: string;
     status: string;
+  };
+  user?: {
+    id: string;
+    fullName: string;
+    email: string;
+    gender: string;
+    age: number;
+    org: string;
   };
 }
 
@@ -92,5 +101,66 @@ export async function deleteEventVolunteer(
     console.error("Failed to delete event:", error);
   } finally {
     alert(`event: ${eventId} is deleted!`);
+  }
+}
+
+export async function getVolunteersByEventId(eventId: string) {
+  try {
+    const response = await API.get(`/volunteer/event/${eventId}/applications`);
+    const rawData = response.data;
+
+    const data: VolunteerProps[] = rawData.map((item: any) => ({
+      id: item.id,
+      name: "volunteer",
+      whyVolunteer: item.whyVolunteer,
+      cvPath: item.cvPath,
+      status: item.status,
+      appliedAt: formatDateTime(item.appliedAt),
+      processedAt: formatDateTime(item.processedAt),
+      userId: item.userId,
+      eventId: item.eventId,
+      event: {
+        id: item.event.id,
+        name: item.event.name,
+        dateTime: formatDateTime(item.event.dateTime),
+        status: item.event.status,
+      },
+    }));
+
+    console.log("volunteers By EventId:", data);
+
+    return { data };
+  } catch (error) {
+    console.error("Error fetching volunteers by Event Id:", error);
+    return { data: [] };
+  }
+}
+
+export async function getVolunteersById(id: string) {
+  try {
+    const response = await API.get(
+      `/volunteer/applications/${id.slice(-38, -1).slice(1)}`
+    );
+    const data = response.data;
+    console.log("volunteers By Id:", data);
+
+    return { data };
+  } catch (error) {
+    console.error("Error fetching volunteers by Id:", error);
+    return { data: [] };
+  }
+}
+
+export async function updateVolunteerStatus(id: string, status: string) {
+  try {
+    const response = await API.patch(`/volunteer/applications/${id}/status`, {
+      status: status,
+    });
+    window.location.reload();
+    return response;
+  } catch (error) {
+    console.error("Failed to update volunteer status:", error);
+  } finally {
+    alert(`Volunteer Status is updated!`);
   }
 }

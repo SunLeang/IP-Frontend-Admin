@@ -25,7 +25,8 @@ export default function Page() {
           rows={data || []}
           title="Details"
           dataType="event"
-          showStatusToggle={true}
+          showStatusToggle={false}
+          showOpenTaskSidebar={false}
         />
       </div>
     </div>

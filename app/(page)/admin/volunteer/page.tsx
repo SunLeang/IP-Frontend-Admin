@@ -14,6 +14,8 @@ import Loading from "../events/(components)/Loading";
 import ErrorMessage from "../events/(components)/ErrorMessage";
 import { getVolunteers } from "@/app/(api)/volunteers_api";
 import { useQuery } from "@tanstack/react-query";
+import SwitchPage from "@/components/switch-pages";
+import { getTasks } from "@/app/(api)/tasks_api";
 
 type Task = {
   id: string;
@@ -23,18 +25,25 @@ type Task = {
   date: string;
 };
 
-function Page() {
+export default function Page() {
   const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
-    data: volunteers,
+    data: Tasks,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["volunteers"],
-    queryFn: getVolunteers,
-    select: (res) => res.data,
+    queryKey: ["tasks"],
+    queryFn: getTasks,
+    select: (res) => res,
   });
+
+  const totalPages = Math.ceil((Tasks?.length ?? 0) / pageSize);
+  const paginatedData = Tasks?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   if (isLoading) return <Loading message="Loading tasks..." />;
   if (isError) return <ErrorMessage message="Failed to load tasks." />;
@@ -44,46 +53,32 @@ function Page() {
       <main className="p-6 space-y-6">
         <h1 className="text-2xl font-bold">Event Volunteers</h1>
 
-        <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
-          <DataTable rows={volunteers || []} title="" dataType="volunteer1" />
+        <div className="table-box">
+          <DataTable
+            rows={Tasks || []}
+            title="Tasks"
+            dataType="task"
+            showCreateTaskSidebar={true}
+          />
 
-          <div className="flex justify-between items-center mt-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <select
-                className="border rounded px-2 py-1"
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-              >
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-4">
-              <span>
-                1 – {Math.min(pageSize, volunteers?.length ?? 0)} of{" "}
-                {volunteers?.length ?? 0}
-              </span>
-              <div className="flex items-center gap-2">
-                <button className="p-1 hover:bg-gray-100 rounded">
-                  &laquo;
-                </button>
-                <button className="p-1 hover:bg-gray-100 rounded">
-                  &lsaquo;
-                </button>
-                <button className="p-1 hover:bg-gray-100 rounded">
-                  &rsaquo;
-                </button>
-                <button className="p-1 hover:bg-gray-100 rounded">
-                  &raquo;
-                </button>
-              </div>
-            </div>
-          </div>
+          <SwitchPage
+            pageSize={pageSize}
+            totalItems={Tasks?.length ?? 0}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            onPreviousPage={() =>
+              setCurrentPage((prev) => Math.max(prev - 1, 1))
+            }
+            onNextPage={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+          />
         </div>
       </main>
     </>
   );
 }
-
-export default Page;

@@ -7,6 +7,9 @@ interface ConfirmPopupProps {
   onCancel: () => void;
   onView?: () => void;
   showView?: boolean;
+  showOpenTaskSidebar?: boolean;
+  showCreateTaskSidebar?: boolean;
+  onOpenDetail?: () => void;
 }
 
 const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
@@ -16,6 +19,9 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   onCancel,
   onView,
   showView = false,
+  showOpenTaskSidebar = false,
+  showCreateTaskSidebar = false,
+  onOpenDetail,
 }) => {
   return (
     <div
@@ -36,14 +42,26 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
           View
         </button>
       )}
-      <button
-        className="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"
-        onClick={() => {
-          onOpenTask();
-        }}
-      >
-        Open Task Sidebar
-      </button>
+
+      {onOpenDetail && (
+        <button
+          onClick={onOpenDetail}
+          className="w-full text-left px-4 py-2 hover:bg-gray-100"
+        >
+          {showCreateTaskSidebar ? "Assign Task" : "View Details"}
+        </button>
+      )}
+
+      {showOpenTaskSidebar && (
+        <button
+          className="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"
+          onClick={() => {
+            onOpenTask();
+          }}
+        >
+          Open Task Sidebar
+        </button>
+      )}
       <button
         className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
         onClick={() => {

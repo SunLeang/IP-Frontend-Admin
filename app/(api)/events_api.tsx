@@ -118,10 +118,10 @@ export async function deleteEvent(id: string) {
   try {
     const response = await API.delete(`/events/${id}`);
     window.location.reload();
+    alert(`event: ${id} is deleted!`);
     return response;
   } catch (error) {
     console.error("Failed to delete event:", error);
   } finally {
-    alert(`event: ${id} is deleted!`);
   }
 }

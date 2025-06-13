@@ -1,90 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { getCategories } from "@/services/category-service";
-import { Category } from "@/types/category";
-import { useEvents } from "@/hooks/useEvents";
-import { EventsFilter } from "@/components/events/events-filter";
-import { EventsGrid } from "@/components/events/events-grid";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Home,
+  Search,
+  Filter,
+  MoreVertical,
+  Plus,
+  Printer,
+} from "lucide-react";
+import { getVolunteers } from "@/app/(api)/volunteers_api";
+import { useQuery } from "@tanstack/react-query";
+import SwitchPage from "@/components/switch-pages";
+import Loading from "../(components)/Loading";
+import ErrorMessage from "../(components)/ErrorMessage";
+import DataTable from "../(components)/DataTable";
 
-/**
- * Events Page Component
- * Displays a filterable list of events with category filters
- *
- * Features:
- * - Category-based filtering
- * - Loading states
- * - Responsive grid layout
- * - URL parameter support
- */
-export default function EventsPage() {
-  const searchParams = useSearchParams();
-  const categoryId = searchParams.get("category");
+type Task = {
+  id: string;
+  description: string;
+  status: string;
+  type: string;
+  date: string;
+};
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    categoryId
-  );
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
+export default function Page() {
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Use the custom hook for events data
   const {
-    events,
-    isLoading: eventsLoading,
-    error,
-  } = useEvents(
-    selectedCategory
-      ? { categoryId: selectedCategory, status: "PUBLISHED" }
-      : { status: "PUBLISHED" }
+    data: volunteers,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["volunteers"],
+    queryFn: getVolunteers,
+    select: (res) => res.data,
+  });
+
+  const totalPages = Math.ceil((volunteers?.length ?? 0) / pageSize);
+  const paginatedData = volunteers?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
-  // Fetch categories on component mount
-  useEffect(() => {
-    async function fetchCategories() {
-      setCategoriesLoading(true);
-      try {
-        const categoriesData = await getCategories();
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setCategoriesLoading(false);
-      }
-    }
-
-    fetchCategories();
-  }, []);
-
-  /**
-   * Handles category filter change
-   */
-  const handleCategoryChange = (categoryId: string | null) => {
-    setSelectedCategory(categoryId);
-  };
+  if (isLoading) return <Loading message="Loading tasks..." />;
+  if (isError) return <ErrorMessage message="Failed to load tasks." />;
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Page Title */}
-      <h1 className="text-3xl font-bold mb-6">Events</h1>
+    <>
+      <main className="p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Event Volunteers</h1>
 
-      {/* Category Filters */}
-      <EventsFilter
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-        isLoading={categoriesLoading}
-      />
+        <div className="table-box">
+          <DataTable
+            rows={volunteers || []}
+            title=""
+            dataType="volunteer1"
+            showCreateTaskSidebar={true}
+          />
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">
-          {error}
+          <SwitchPage
+            pageSize={pageSize}
+            totalItems={volunteers?.length ?? 0}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            onPreviousPage={() =>
+              setCurrentPage((prev) => Math.max(prev - 1, 1))
+            }
+            onNextPage={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+          />
         </div>
-      )}
-
-      {/* Events Grid */}
-      <EventsGrid events={events} isLoading={eventsLoading} />
-    </div>
+      </main>
+    </>
   );
 }

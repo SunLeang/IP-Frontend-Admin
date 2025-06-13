@@ -4,7 +4,6 @@ import Link from "next/link";
 import EventCard from "./(components)/EventCard";
 import { EventProps, getEvents } from "@/app/(api)/events_api";
 import { useQuery } from "@tanstack/react-query";
-import { getVolunteers } from "@/app/(api)/volunteers_api";
 import Loading from "./(components)/Loading";
 import ErrorMessage from "./(components)/ErrorMessage";
 import { useEffect, useState } from "react";
