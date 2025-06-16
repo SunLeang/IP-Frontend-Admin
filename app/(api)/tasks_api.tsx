@@ -18,6 +18,12 @@ export interface Assignment {
   };
 }
 
+export interface EventBasicInfo {
+  id: string;
+  name: string;
+  organizerId: string;
+}
+
 export interface TaskProps {
   id: string;
   name: string;
@@ -68,7 +74,7 @@ export async function getTasks(): Promise<TaskProps[]> {
 
 export async function getTasksByEventId(eventId: string): Promise<TaskProps[]> {
   try {
-    const response = await API.get(`/tasks/events/${eventId}`);
+    const response = await API.get(`/tasks/events/${eventId}/volunteers`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch tasks for event:", error);

@@ -30,17 +30,16 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const {
-    data: Tasks,
+    data: Volunteers,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: getTasks,
-    select: (res) => res,
+    queryKey: ["volunteers"],
+    queryFn: getVolunteers,
+    select: (res) => res.data,
   });
-
-  const totalPages = Math.ceil((Tasks?.length ?? 0) / pageSize);
-  const paginatedData = Tasks?.slice(
+  const totalPages = Math.ceil((Volunteers?.length ?? 0) / pageSize);
+  const paginatedData = Volunteers?.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -55,15 +54,14 @@ export default function Page() {
 
         <div className="table-box">
           <DataTable
-            rows={Tasks || []}
+            rows={Volunteers || []}
             title="Tasks"
-            dataType="task"
-            showCreateTaskSidebar={true}
+            dataType="volunteer1"
           />
 
           <SwitchPage
             pageSize={pageSize}
-            totalItems={Tasks?.length ?? 0}
+            totalItems={Volunteers?.length ?? 0}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageSizeChange={(size) => {

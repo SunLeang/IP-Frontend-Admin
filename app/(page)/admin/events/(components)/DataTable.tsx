@@ -29,6 +29,8 @@ interface DataTableProps {
   showView?: boolean;
   showOpenTaskSidebar?: boolean;
   showCreateTaskSidebar?: boolean;
+  showAssignTask?: boolean;
+  showViewDetails?: boolean;
 }
 
 const headersMap: Record<DataType, string[]> = {
@@ -78,6 +80,8 @@ export default function DataTable({
   showView,
   showOpenTaskSidebar,
   showCreateTaskSidebar,
+  showAssignTask,
+  showViewDetails,
 }: DataTableProps) {
   const pathname = usePathname();
   const eventIdFromPath = pathname.startsWith("/admin/events/")
@@ -357,7 +361,6 @@ export default function DataTable({
       {popupPosition && selectedRow && (
         <ConfirmPopup
           showOpenTaskSidebar={showOpenTaskSidebar}
-          showCreateTaskSidebar={showCreateTaskSidebar}
           position={popupPosition}
           onOpenTask={() => {
             setShowTaskBar(true);
@@ -367,13 +370,15 @@ export default function DataTable({
           onView={() => onView?.(selectedRow)}
           onCancel={() => setPopupPosition(null)}
           showView={showView}
-          onOpenDetail={() => {
+          showAssignTask={showAssignTask}
+          showViewDetails={showViewDetails}
+          onAssignTask={() => {
             setPopupPosition(null);
-            if (showCreateTaskSidebar) {
-              setShowDetailCreateTaskSidebar(true);
-            } else {
-              setShowDetailSidebar(true);
-            }
+            setShowDetailCreateTaskSidebar(true);
+          }}
+          onViewDetails={() => {
+            setPopupPosition(null);
+            setShowDetailSidebar(true);
           }}
         />
       )}

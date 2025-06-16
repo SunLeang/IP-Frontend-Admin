@@ -8,11 +8,13 @@ interface ConfirmPopupProps {
   onView?: () => void;
   showView?: boolean;
   showOpenTaskSidebar?: boolean;
-  showCreateTaskSidebar?: boolean;
-  onOpenDetail?: () => void;
+  onAssignTask?: () => void;
+  showAssignTask?: boolean;
+  onViewDetails?: () => void;
+  showViewDetails?: boolean;
 }
 
-const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
+export default function ConfirmPopup({
   position,
   onOpenTask,
   onDelete,
@@ -20,9 +22,11 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
   onView,
   showView = false,
   showOpenTaskSidebar = false,
-  showCreateTaskSidebar = false,
-  onOpenDetail,
-}) => {
+  onAssignTask,
+  showAssignTask = false,
+  onViewDetails,
+  showViewDetails = false,
+}: ConfirmPopupProps) {
   return (
     <div
       className="absolute bg-white shadow-lg border border-gray-200 rounded-md z-50"
@@ -43,12 +47,27 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
         </button>
       )}
 
-      {onOpenDetail && (
+      {showAssignTask && onAssignTask && (
         <button
-          onClick={onOpenDetail}
+          onClick={() => {
+            onAssignTask();
+            onCancel();
+          }}
           className="w-full text-left px-4 py-2 hover:bg-gray-100"
         >
-          {showCreateTaskSidebar ? "Assign Task" : "View Details"}
+          Create Task
+        </button>
+      )}
+
+      {showViewDetails && onViewDetails && (
+        <button
+          onClick={() => {
+            onViewDetails();
+            onCancel();
+          }}
+          className="w-full text-left px-4 py-2 hover:bg-gray-100"
+        >
+          View Details
         </button>
       )}
 
@@ -62,6 +81,7 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
           Open Task Sidebar
         </button>
       )}
+
       <button
         className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
         onClick={() => {
@@ -78,6 +98,4 @@ const ConfirmPopup: React.FC<ConfirmPopupProps> = ({
       </button>
     </div>
   );
-};
-
-export default ConfirmPopup;
+}

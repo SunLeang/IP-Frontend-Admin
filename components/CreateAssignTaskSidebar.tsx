@@ -34,7 +34,7 @@ export default function CreateAssignTaskSidebar({
   useEffect(() => {
     const loadVolunteers = async () => {
       const result = await getVolunteersByEventId(eventId);
-      setVolunteers(result?.data || []);
+      setVolunteers(result.data);
     };
     loadVolunteers();
   }, [eventId]);
@@ -126,8 +126,8 @@ export default function CreateAssignTaskSidebar({
         >
           <option value="">-- Select a volunteer --</option>
           {volunteers.map((v: any) => (
-            <option key={v.id} value={v.id}>
-              {v.fullName}
+            <option key={v.id} value={v.user.id}>
+              {v.user.fullName}
             </option>
           ))}
         </select>

@@ -1,12 +1,17 @@
+// app/admin/announcement/create_announcement/page.tsx
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CloudUpload } from "lucide-react";
 import { createAnnouncement } from "@/app/(api)/announcements_api";
-import { EventProps, getEvents } from "@/app/(api)/events_api";
+import { getEvents } from "@/app/(api)/events_api";
+import { EventProps } from "@/app/(api)/events_api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function CreateAnnouncement() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [announcement, setAnnouncement] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -15,52 +20,52 @@ export default function CreateAnnouncement() {
     image: "",
     event: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [events, setEvents] = useState<EventProps[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const handlePublish = async () => {
     if (
       !announcement.title ||
-      !announcement.description
-      // !announcement.image
+      !announcement.description ||
+      !announcement.event
     ) {
       alert("Please fill out all required fields.");
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const payload = {
         title: announcement.title,
         description: announcement.description,
-        // image: announcement.image,
-        image: "summer.png",
-        eventId: "b311733e-d5f8-4fe3-9b78-e51519553a0d",
+        image: announcement.image || "songkran.png",
+        eventId: announcement.event,
       };
-
-      const res = await createAnnouncement(payload);
-      console.log("Announcement created:", res);
+      await createAnnouncement(payload);
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
       router.push("/admin/announcement");
     } catch (error) {
-      alert(`Error publishing announcement:, ${error}`);
+      console.error("Failed to create announcement", error);
+      alert("Something went wrong.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
-    async function fetchEvents() {
+    const loadEvents = async () => {
       try {
         const { data } = await getEvents();
         setEvents(data);
-      } catch (error) {
-        console.error("Failed to load events", error);
+      } catch (err) {
+        console.error("Failed to load events", err);
       } finally {
         setLoading(false);
       }
-    }
-
-    fetchEvents();
+    };
+    loadEvents();
   }, []);
 
   return (
@@ -68,7 +73,7 @@ export default function CreateAnnouncement() {
       <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
         <button
           onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg"
         >
           <ArrowLeft />
         </button>
@@ -79,93 +84,74 @@ export default function CreateAnnouncement() {
 
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-2xl space-y-6">
-          <div>
-            <select
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
-              value={announcement.event}
-              onChange={(e) =>
-                setAnnouncement({ ...announcement, event: e.target.value })
-              }
-            >
-              <option value="" disabled>
-                Select an Event
+          {/* Event selection */}
+          <select
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+            value={announcement.event}
+            onChange={(e) =>
+              setAnnouncement({ ...announcement, event: e.target.value })
+            }
+          >
+            <option value="">Select an Event</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name}
               </option>
-              {events.map((event) => (
-                <option key={event.id} value={event.id}>
-                  {event.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            ))}
+          </select>
 
-          <div>
-            <input
-              type="text"
-              placeholder="Title"
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={announcement.title}
-              onChange={(e) =>
-                setAnnouncement({ ...announcement, title: e.target.value })
-              }
-            />
-          </div>
+          {/* Title */}
+          <input
+            type="text"
+            placeholder="Title"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+            value={announcement.title}
+            onChange={(e) =>
+              setAnnouncement({ ...announcement, title: e.target.value })
+            }
+          />
 
+          {/* Image upload */}
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center bg-gray-50">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                <CloudUpload />
-              </div>
-              <p className="text-gray-900 font-medium mb-1">
-                Choose a file or drag & drop it here
-              </p>
-              <p className="text-gray-500 text-sm mb-4">
-                JPEG, PNG, PDF, and MP4 formats, up to 50MB
-              </p>
-              <button
-                type="button"
-                className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                onClick={() =>
-                  setAnnouncement({
-                    ...announcement,
-                    image:
-                      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=180&fit=crop",
-                  })
-                }
-              >
-                Browse File
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Why Volunteer?</h3>
-            <textarea
-              placeholder="Describe what's special about your event & other important details."
-              rows={8}
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              value={announcement.description}
-              onChange={(e) =>
+            <CloudUpload className="mx-auto mb-4 w-10 h-10 text-gray-500" />
+            <p className="mb-2">Drag and drop or select a file</p>
+            <button
+              className="px-4 py-2 border rounded-md"
+              onClick={() =>
                 setAnnouncement({
                   ...announcement,
-                  description: e.target.value,
+                  image: "songkran.png",
                 })
               }
-            />
+            >
+              Upload Image
+            </button>
           </div>
+
+          {/* Description */}
+          <textarea
+            placeholder="Describe the announcement..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+            rows={6}
+            value={announcement.description}
+            onChange={(e) =>
+              setAnnouncement({ ...announcement, description: e.target.value })
+            }
+          />
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 p-4 border-t rounded-lg border-gray-200 bg-gray-50">
+      <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
         <button
           onClick={() => router.back()}
-          className="px-8 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          className="px-6 py-2 bg-white border border-gray-300 rounded-md"
         >
           Cancel
         </button>
         <button
           onClick={handlePublish}
           disabled={isSubmitting}
-          className="px-8 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-60"
+          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
         >
           {isSubmitting ? "Publishing..." : "Publish"}
         </button>

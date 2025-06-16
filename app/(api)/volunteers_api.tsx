@@ -106,12 +106,13 @@ export async function deleteEventVolunteer(
 
 export async function getVolunteersByEventId(eventId: string) {
   try {
+    // console.log("eventID Inside API: " + eventId);
+
     const response = await API.get(`/volunteer/event/${eventId}/applications`);
     const rawData = response.data;
 
     const data: VolunteerProps[] = rawData.map((item: any) => ({
       id: item.id,
-      name: "volunteer",
       whyVolunteer: item.whyVolunteer,
       cvPath: item.cvPath,
       status: item.status,
@@ -119,11 +120,13 @@ export async function getVolunteersByEventId(eventId: string) {
       processedAt: formatDateTime(item.processedAt),
       userId: item.userId,
       eventId: item.eventId,
-      event: {
-        id: item.event.id,
-        name: item.event.name,
-        dateTime: formatDateTime(item.event.dateTime),
-        status: item.event.status,
+      user: {
+        id: item.user.id,
+        fullName: item.user.fullName,
+        email: item.user.email,
+        gender: item.user.status,
+        age: item.user.age,
+        org: item.user.org,
       },
     }));
 
