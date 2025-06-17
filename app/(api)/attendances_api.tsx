@@ -17,6 +17,13 @@ export interface AttendanceProps {
   };
 }
 
+export interface AttendanceStatsProps {
+  total?: string;
+  joined?: string;
+  leftEarly?: string;
+  noShow?: string;
+}
+
 export async function getEventAttendees(): Promise<AttendanceProps[]> {
   const eventId = "7dc32f18-71f6-4e7a-be82-eacf86e22e88";
 
@@ -46,5 +53,17 @@ export async function createAttendance(
   data: Partial<AttendanceProps>
 ): Promise<AttendanceProps> {
   const res = await API.post("/attendances", data);
+  return res.data;
+}
+
+export async function getAttendanceStatsByEventId(): Promise<
+  AttendanceStatsProps[]
+> {
+  const eventId = "7dc32f18-71f6-4e7a-be82-eacf86e22e88";
+
+  const res = await API.get(`/attendance/event/${eventId}/stats`, {
+    params: { eventId },
+  });
+  console.log("res: " + JSON.stringify(res.data));
   return res.data;
 }

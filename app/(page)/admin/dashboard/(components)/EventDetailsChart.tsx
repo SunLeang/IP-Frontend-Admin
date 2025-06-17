@@ -4,47 +4,36 @@ import * as React from "react";
 import { legendClasses } from "@mui/x-charts/ChartsLegend";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { PiecewiseColorLegend } from "@mui/x-charts/ChartsLegend";
-
-interface EventData {
-  number: number;
-  name: string;
-  attendee: string;
-  volunteer: string;
-  progress: number;
-  location: string;
-  dateTime: string;
-  status: string;
-  color?: string;
-}
+import { EventProps } from "@/app/(api)/events_api";
 
 interface EventDetailsChartProps {
-  eventNumber: number;
-  data: EventData[];
+  data?: EventProps[];
   setIsViewChart: (value: boolean) => void;
-  colorPairs: Record<string, string>;
 }
 
 export default function EventDetailsChart({
-  eventNumber,
   setIsViewChart,
   data,
-  colorPairs,
 }: EventDetailsChartProps) {
   function fromToToClass(fromClass: string): string {
     if (!fromClass.startsWith("from-")) return "";
     return fromClass.replace("from-", "to-");
   }
 
-  const colorFrom = data[0]?.color;
-  const colorTo = fromToToClass(data[1]?.color || "from-green-600");
+  const colorFrom = "from-blue-600";
+  const colorTo = fromToToClass("from-green-600");
 
   const gradient = `bg-gradient-to-r ${colorFrom} ${colorTo}`;
 
-  const pie = data.map((event, index) => ({
+  const pie = data?.map((event, index) => ({
     id: index + 1,
-    value: event.progress,
+    value: Math.floor(Math.random() * 101),
     label: event.name,
   }));
+
+  if (data?.length === 0) {
+    return <div className="text-center text-gray-500">No upcoming events.</div>;
+  }
 
   return (
     <div className="bg-white pt-4 pr-4 pl-4 rounded-lg shadow-md mb-6">
@@ -68,7 +57,7 @@ export default function EventDetailsChart({
       <PieChart
         series={[
           {
-            data: pie,
+            data: pie ?? [],
             innerRadius: 90,
             outerRadius: 145,
             // cornerRadius: 5,
@@ -109,8 +98,8 @@ export default function EventDetailsChart({
 
       <div className="flex justify-center relative bottom-24">
         <h3 className="text-gray-600 font-bold text-l text-center">
-          <div>{eventNumber}</div>
-          <div>{eventNumber === 1 ? "Event" : "Events"}</div>
+          <div>{data?.length}</div>
+          <div>{data?.length === 1 ? "Event" : "Events"}</div>
         </h3>
       </div>
 

@@ -30,6 +30,7 @@ export interface EventProps {
     volunteers: number;
   };
   price: number;
+  progress?: number;
 }
 
 export interface CreateEventPayload {
