@@ -15,6 +15,7 @@ import TaskDetailSidebar from "@/components/task-detail-sidebar";
 import CreateAssignTaskSidebar from "@/components/CreateAssignTaskSidebar";
 import { usePathname } from "next/navigation";
 import { TaskProps } from "@/app/(api)/tasks_api";
+import EventDetailSidebar from "@/components/event-detail-sidebar";
 
 type DataType = "event" | "volunteer" | "attendance" | "volunteer1" | "task";
 
@@ -31,6 +32,7 @@ interface DataTableProps {
   showCreateTaskSidebar?: boolean;
   showAssignTask?: boolean;
   showViewDetails?: boolean;
+  showUpdateEvent?: boolean;
 }
 
 const headersMap: Record<DataType, string[]> = {
@@ -82,6 +84,7 @@ export default function DataTable({
   showCreateTaskSidebar,
   showAssignTask,
   showViewDetails,
+  showUpdateEvent,
 }: DataTableProps) {
   const pathname = usePathname();
   const eventIdFromPath = pathname.startsWith("/admin/events/")
@@ -101,6 +104,7 @@ export default function DataTable({
   const [showDetailSidebar, setShowDetailSidebar] = useState(false);
   const [showDetailCreateTaskSidebar, setShowDetailCreateTaskSidebar] =
     useState(false);
+  const [showUpdateEventSidebar, setShowUpdateEventSidebar] = useState(false);
 
   const handlePopupClick = (e: React.MouseEvent, row: any) => {
     e.stopPropagation();
@@ -380,6 +384,11 @@ export default function DataTable({
             setPopupPosition(null);
             setShowDetailSidebar(true);
           }}
+          showUpdateEvent={showUpdateEvent}
+          onUpdateEvent={() => {
+            setPopupPosition(null);
+            setShowUpdateEventSidebar(true);
+          }}
         />
       )}
 
@@ -401,6 +410,13 @@ export default function DataTable({
         <CreateAssignTaskSidebar
           eventId={eventIdFromPath ?? ""}
           onClose={() => setShowDetailCreateTaskSidebar(false)}
+        />
+      )}
+
+      {showUpdateEventSidebar && selectedRow && (
+        <EventDetailSidebar
+          event={selectedRow}
+          onClose={() => setShowUpdateEventSidebar(false)}
         />
       )}
     </div>

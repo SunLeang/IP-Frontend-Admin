@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import EventCard from "./(components)/EventCard";
-import { getEvents } from "@/app/(api)/events_api";
+import { EventProps, getEvents } from "@/app/(api)/events_api";
 import { useQuery } from "@tanstack/react-query";
-import { getVolunteers } from "@/app/(api)/volunteers_api";
 import Loading from "./(components)/Loading";
 import ErrorMessage from "./(components)/ErrorMessage";
 
@@ -39,8 +38,11 @@ export default function page() {
         </div>
       </div>
 
-      <EventCard events={data ?? []} showSeeMoreButton={false} />
-      {/* <EventCard events={events} showSeeMoreButton={false} /> */}
+      <EventCard
+        events={data ?? []}
+        showSeeMoreButton={false}
+        showView={false}
+      />
     </div>
   );
 }

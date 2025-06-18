@@ -12,6 +12,8 @@ interface ConfirmPopupProps {
   showAssignTask?: boolean;
   onViewDetails?: () => void;
   showViewDetails?: boolean;
+  showUpdateEvent?: boolean;
+  onUpdateEvent?: () => void;
 }
 
 export default function ConfirmPopup({
@@ -24,8 +26,10 @@ export default function ConfirmPopup({
   showOpenTaskSidebar = false,
   onAssignTask,
   showAssignTask = false,
-  onViewDetails,
   showViewDetails = false,
+  onViewDetails,
+  showUpdateEvent = false,
+  onUpdateEvent,
 }: ConfirmPopupProps) {
   return (
     <div
@@ -79,6 +83,18 @@ export default function ConfirmPopup({
           }}
         >
           Open Task Sidebar
+        </button>
+      )}
+
+      {showUpdateEvent && onUpdateEvent && (
+        <button
+          onClick={() => {
+            onUpdateEvent();
+            onCancel();
+          }}
+          className="w-full text-left px-4 py-2 hover:bg-gray-100"
+        >
+          Update Event
         </button>
       )}
 

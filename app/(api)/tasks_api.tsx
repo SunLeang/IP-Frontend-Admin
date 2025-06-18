@@ -74,7 +74,7 @@ export async function getTasks(): Promise<TaskProps[]> {
 
 export async function getTasksByEventId(eventId: string): Promise<TaskProps[]> {
   try {
-    const response = await API.get(`/tasks/events/${eventId}/volunteers`);
+    const response = await API.get(`/tasks/events/${eventId}`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch tasks for event:", error);

@@ -5,59 +5,69 @@ import { Pencil, X } from "lucide-react";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { updateTask } from "@/app/(api)/tasks_api";
+import { updateEvent } from "@/app/(api)/events_api";
 
-interface Task {
+interface Event {
   id: string;
   name: string;
-  type: string;
-  status: string;
   description: string;
+  venue: string;
+  date: string;
+  time: string;
+  organizer: string;
+  status: string;
 }
 
-interface TaskDetailSidebarProps {
-  task: Task;
+interface EventDetailSidebarProps {
+  event: Event;
   onClose: () => void;
 }
 
-export default function TaskDetailSidebar({
-  task,
+export default function EventDetailSidebar({
+  event,
   onClose,
-}: TaskDetailSidebarProps) {
-  const [editableTask, setEditableTask] = useState(task);
+}: EventDetailSidebarProps) {
+  const [editableEvent, setEditableEvent] = useState(event);
   const [isEditing, setIsEditing] = useState({
     name: false,
-    type: false,
-    status: false,
     description: false,
+    venue: false,
+    // date: false,
+    // time: false,
+    organizer: false,
+    status: false,
   });
 
   const toggleEdit = (field: keyof typeof isEditing) => {
     setIsEditing((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handleChange = (field: keyof Task, value: string) => {
-    setEditableTask((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof Event, value: string) => {
+    setEditableEvent((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
     try {
-      const { id, ...rest } = editableTask;
-      // ensure status is  correct type
+      const { id, ...rest } = editableEvent;
       const payload = {
         ...rest,
-        status: (["Pending", "In Progress", "Completed"].includes(rest.status)
+        status: (["DRAFT", "PUBLISHED"].includes(rest.status)
           ? rest.status
-          : "Pending") as "Pending" | "In Progress" | "Completed",
+          : "DRAFT") as "DRAFT" | "PUBLISHED",
       };
 
-      await updateTask(id, payload);
-
-      alert("Task updated!");
+      await updateEvent(editableEvent.id, {
+        name: editableEvent.name,
+        description: editableEvent.description,
+        // dateTime: `${editableEvent.date}T${editableEvent.time}`,
+        locationDesc: editableEvent.venue,
+        status: editableEvent.status as "DRAFT" | "PUBLISHED",
+      });
+      alert("Event updated!");
       onClose();
     } catch (err) {
-      console.error("Failed to update task", err);
-      alert("Error updating task.");
+      console.error("Failed to update event", err);
+      alert("Error updating event.");
     }
   };
 
@@ -65,49 +75,68 @@ export default function TaskDetailSidebar({
     <div className="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-lg z-50 overflow-y-auto p-4 space-y-4">
       <div className="flex justify-between items-center border-b pb-2">
         <div className="w-10" />
-        <h2 className="text-lg font-semibold">Tasks-{task.name}</h2>
+        <h2 className="text-lg font-semibold">Event - {event.name}</h2>
         <X className="cursor-pointer" onClick={onClose} />
       </div>
 
-      {/* Name */}
       <Field
         label="Name"
-        value={editableTask.name}
+        value={editableEvent.name}
         editing={isEditing.name}
         onChange={(val) => handleChange("name", val)}
         onToggle={() => toggleEdit("name")}
       />
 
-      {/* Type */}
       <Field
-        label="Type"
-        value={editableTask.type}
-        editing={isEditing.type}
-        onChange={(val) => handleChange("type", val)}
-        onToggle={() => toggleEdit("type")}
+        label="Venue"
+        value={editableEvent.venue}
+        editing={isEditing.venue}
+        onChange={(val) => handleChange("venue", val)}
+        onToggle={() => toggleEdit("venue")}
       />
 
-      {/* Status */}
+      {/* <Field
+        label="Date"
+        value={editableEvent.date}
+        editing={isEditing.date}
+        type="date"
+        onChange={(val) => handleChange("date", val)}
+        onToggle={() => toggleEdit("date")}
+      /> */}
+
+      {/* <Field
+        label="Time"
+        value={editableEvent.time}
+        editing={isEditing.time}
+        type="time"
+        onChange={(val) => handleChange("time", val)}
+        onToggle={() => toggleEdit("time")}
+      /> */}
+
+      <Field
+        label="Organizer"
+        value={editableEvent.organizer}
+        editing={isEditing.organizer}
+        onChange={(val) => handleChange("organizer", val)}
+        onToggle={() => toggleEdit("organizer")}
+      />
+
       <div className="space-y-2">
         <label className="text-sm font-medium">Status</label>
         {isEditing.status ? (
           <select
             className="w-full border border-gray-300 px-3 py-2 rounded"
-            value={editableTask.status}
+            value={editableEvent.status}
             onChange={(e) =>
-              handleChange(
-                "status",
-                e.target.value as "PENDING" | "IN_PROGRESS" | "COMPLETED"
-              )
+              handleChange("status", e.target.value as "DRAFT" | "PUBLISHED")
             }
           >
-            <option value="PENDING">PENDING</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="COMPLETED">COMPLETED</option>
+            <option value="DRAFT">DRAFT</option>
+            <option value="PUBLISHED">PUBLISHED</option>
           </select>
         ) : (
           <div className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded">
-            <span>{editableTask.status}</span>
+            <span>{editableEvent.status}</span>
             <button onClick={() => toggleEdit("status")}>
               <Pencil size={18} />
             </button>
@@ -115,17 +144,16 @@ export default function TaskDetailSidebar({
         )}
       </div>
 
-      {/* Description */}
       <div>
         <label className="text-sm font-medium">Description:</label>
         <div className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded relative">
           {isEditing.description ? (
             <Textarea
-              value={editableTask.description}
+              value={editableEvent.description}
               onChange={(e) => handleChange("description", e.target.value)}
             />
           ) : (
-            <p>{editableTask.description}</p>
+            <p>{editableEvent.description}</p>
           )}
           <button onClick={() => toggleEdit("description")}>
             <Pencil size={18} />
@@ -145,7 +173,6 @@ function Field({
   onChange,
   onToggle,
   type = "text",
-  options,
 }: {
   label: string;
   value: string;
@@ -153,37 +180,17 @@ function Field({
   onChange: (v: string) => void;
   onToggle: () => void;
   type?: "text" | "textarea" | "select" | "date" | "time";
-  options?: string[]; // for select type
 }) {
   return (
     <div className="space-y-1">
       <label className="text-sm font-medium">{label}</label>
       <div className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded">
         {editing ? (
-          type === "textarea" ? (
-            <Textarea
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-            />
-          ) : type === "select" && options ? (
-            <select
-              className="w-full bg-white"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-            >
-              {options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <Input
-              type={type === "date" || type === "time" ? type : "text"}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-            />
-          )
+          <Input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          />
         ) : (
           <span>{value}</span>
         )}

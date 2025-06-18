@@ -14,7 +14,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard allowedRoles={["ADMIN"]}>
+    <AuthGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
       <AdminProvider>
         <div className="flex flex-col h-screen">
           <Header />

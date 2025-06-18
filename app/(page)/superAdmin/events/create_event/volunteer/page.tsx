@@ -145,20 +145,6 @@ export default function CreateEventPage() {
         </div>
       </div>
 
-      {/* Hosted By */}
-      <div className="flex items-start gap-6">
-        <div className="text-xl font-semibold mt-[0.5rem]">Hosted By</div>
-        <div className="flex items-center gap-4">
-          <Image src="/logo.png" alt="logo" width={80} height={20} />
-          <div className="flex flex-col gap-1">
-            <p>{user}</p>
-            <button className="bg-[#7769F7] text-xs text-white px-6 py-1 rounded-sm">
-              Like
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Volunteer Description */}
       <div>
         <p className="text-xl font-semibold mb-2">Why Volunteer?</p>

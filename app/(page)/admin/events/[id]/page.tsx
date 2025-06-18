@@ -22,25 +22,27 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [assignTask, setAssignTask] = useState<boolean>(false);
 
-  //  const params = useParams();
-  // const eventId = params.id as string;
-
-  const eventId = "some-event-id";
+  const params = useParams();
+  const eventId = params.id as string;
 
   const {
     data: Tasks,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: getTasks,
+    queryKey: ["tasks", eventId],
+    queryFn: () => getTasksByEventId(eventId),
     select: (res) => res,
   });
 
-  const totalPages = Math.ceil((Tasks?.length ?? 0) / pageSize);
-
   if (isLoading) return <Loading message="Loading tasks..." />;
   if (isError) return <ErrorMessage message="Failed to load tasks." />;
+
+  const totalPages = Math.ceil((Tasks?.length ?? 0) / pageSize);
+  const paginatedTasks = Tasks?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <>
@@ -54,7 +56,7 @@ export default function Page() {
 
         <div className="table-box">
           <DataTable
-            rows={Tasks || []}
+            rows={paginatedTasks || []}
             title="Tasks"
             dataType="task"
             showAssignTask={true}

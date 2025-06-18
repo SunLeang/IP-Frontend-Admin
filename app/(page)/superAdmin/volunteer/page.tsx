@@ -57,7 +57,6 @@ export default function Page() {
             rows={Volunteers || []}
             title="Tasks"
             dataType="volunteer1"
-            showViewDetails={true}
           />
 
           <SwitchPage

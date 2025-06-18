@@ -1,21 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Home,
-  Search,
-  Filter,
-  MoreVertical,
-  Plus,
-  Printer,
-} from "lucide-react";
-import DataTable from "../events/(components)/DataTable";
-import Loading from "../events/(components)/Loading";
-import ErrorMessage from "../events/(components)/ErrorMessage";
-import { getVolunteers } from "@/app/(api)/volunteers_api";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import SwitchPage from "@/components/switch-pages";
-import { getTasks } from "@/app/(api)/tasks_api";
+import Loading from "../(components)/Loading";
+import ErrorMessage from "../(components)/ErrorMessage";
+import DataTable from "../(components)/DataTable";
+import { getTasks, getTasksByEventId } from "@/app/(api)/tasks_api";
+import { useParams } from "next/navigation";
 
 type Task = {
   id: string;
@@ -28,41 +20,49 @@ type Task = {
 export default function Page() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [assignTask, setAssignTask] = useState<boolean>(false);
+
+  const params = useParams();
+  const eventId = params.id as string;
 
   const {
-    data: Volunteers,
+    data: Tasks,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["volunteers"],
-    queryFn: getVolunteers,
-    select: (res) => res.data,
+    queryKey: ["tasks", eventId],
+    queryFn: () => getTasksByEventId(eventId),
+    select: (res) => res,
   });
-  const totalPages = Math.ceil((Volunteers?.length ?? 0) / pageSize);
-  const paginatedData = Volunteers?.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   if (isLoading) return <Loading message="Loading tasks..." />;
   if (isError) return <ErrorMessage message="Failed to load tasks." />;
 
+  const totalPages = Math.ceil((Tasks?.length ?? 0) / pageSize);
+  const paginatedTasks = Tasks?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <>
       <main className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Event Volunteers</h1>
+        <div className="flex justify-between">
+          <h1 className="text-2xl font-bold">Event Tasks</h1>
+        </div>
 
         <div className="table-box">
           <DataTable
-            rows={Volunteers || []}
+            rows={paginatedTasks || []}
             title="Tasks"
-            dataType="volunteer1"
+            dataType="task"
+            showAssignTask={true}
             showViewDetails={true}
           />
 
           <SwitchPage
             pageSize={pageSize}
-            totalItems={Volunteers?.length ?? 0}
+            totalItems={Tasks?.length ?? 0}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageSizeChange={(size) => {

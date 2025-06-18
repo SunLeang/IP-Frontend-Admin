@@ -126,3 +126,18 @@ export async function deleteEvent(id: string) {
   } finally {
   }
 }
+
+export async function updateEvent(
+  id: string,
+  data: Partial<CreateEventPayload>
+) {
+  try {
+    console.log("object: " + JSON.stringify(data));
+    const response = await API.patch(`/events/${id}`, data);
+    console.log("Event updated:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update event:", error);
+    throw error;
+  }
+}

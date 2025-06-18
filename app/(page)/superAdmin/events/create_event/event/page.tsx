@@ -211,26 +211,6 @@ export default function CreateEventPage() {
         />
       </div>
 
-      {/* Hosted By */}
-      <div className="flex flex-col gap-2 ml-2 mb-6">
-        <p className="text-xl font-semibold">Hosted By</p>
-        <div className="flex items-center gap-4">
-          <Image
-            src="/logo.png"
-            alt="Host"
-            width={60}
-            height={60}
-            className="rounded-full"
-          />
-          <div className="flex flex-col gap-1">
-            <p>{user}</p>
-            <button className="bg-[#7769F7] text-xs text-white px-6 py-1 rounded-sm">
-              Like
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Description */}
       <div className="flex flex-col gap-2">
         <p className="text-xl font-semibold">Event Description</p>

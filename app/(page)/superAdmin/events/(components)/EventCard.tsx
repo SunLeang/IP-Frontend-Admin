@@ -8,7 +8,10 @@ interface EventCardProps {
   events: EventProps[];
   onSeeMore?: () => void;
   isExpanded?: boolean;
-  showSeeMoreButton: boolean;
+  showSeeMoreButton?: boolean;
+  showView?: boolean;
+  onDelete?: (row: any) => void;
+  onView?: (row: any) => void;
 }
 
 const month = [
@@ -50,8 +53,7 @@ export default function EventCard({
             },
             index
           ) => (
-            <Link href={`/admin/events/${id}`} key={index}>
-              {" "}
+            <Link key={index} href={`/superAdmin/events/${id}`}>
               <div className="bg-white rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition">
                 {/* Image */}
                 <div className="relative">

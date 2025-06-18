@@ -3,7 +3,7 @@
 import Header from "../../(components)/Header";
 import DataTable from "../../(components)/DataTable";
 import { useQuery } from "@tanstack/react-query";
-import { getEvents } from "@/app/(api)/events_api";
+import { EventProps, getEvents } from "@/app/(api)/events_api";
 import Loading from "../../(components)/Loading";
 import ErrorMessage from "../../(components)/ErrorMessage";
 
@@ -25,7 +25,8 @@ export default function Page() {
           rows={data || []}
           title="Details"
           dataType="event"
-          showStatusToggle={true}
+          showUpdateEvent={true}
+          // showAssignTask={true}
         />
       </div>
     </div>

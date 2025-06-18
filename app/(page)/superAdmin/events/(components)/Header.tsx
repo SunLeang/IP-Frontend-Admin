@@ -7,17 +7,20 @@ import React from "react";
 export default function Header() {
   const pathname = usePathname();
 
-  const isCreateEvent = pathname.includes("/admin/events/create_event");
+  const isCreateEvent = pathname.includes("/superAdmin/events/create_event");
 
   const links = isCreateEvent
     ? [
-        { href: "/admin/events/create_event/event", label: "Details" },
-        { href: "/admin/events/create_event/volunteer", label: "Volunteer" },
+        { href: "/superAdmin/events/create_event/event", label: "Details" },
+        {
+          href: "/superAdmin/events/create_event/volunteer",
+          label: "Volunteer",
+        },
       ]
     : [
-        { href: "/admin/events/lists/events", label: "Details" },
-        { href: "/admin/events/lists/volunteers", label: "Volunteer" },
-        { href: "/admin/events/lists/attendees", label: "Attendee" },
+        { href: "/superAdmin/events/lists/events", label: "Details" },
+        { href: "/superAdmin/events/lists/volunteers", label: "Volunteer" },
+        { href: "/superAdmin/events/lists/attendees", label: "Attendee" },
       ];
 
   return (

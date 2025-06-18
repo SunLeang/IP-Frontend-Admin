@@ -3,7 +3,7 @@
 import Header from "../../(components)/Header";
 import DataTable from "../../(components)/DataTable";
 import { useQuery } from "@tanstack/react-query";
-import { getVolunteers, VolunteerProps } from "@/app/(api)/volunteers_api";
+import { getVolunteers } from "@/app/(api)/volunteers_api";
 import Loading from "../../(components)/Loading";
 import ErrorMessage from "../../(components)/ErrorMessage";
 
@@ -27,6 +27,7 @@ export default function Page() {
           dataType="volunteer"
           filterStatus="Attending"
           showStatusToggle={true}
+          showOpenTaskSidebar={true}
         />
       </div>
     </div>
