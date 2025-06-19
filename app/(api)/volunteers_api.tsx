@@ -66,20 +66,18 @@ export async function getVolunteers() {
 }
 
 export async function createVolunteerEvent(data: CreateVolunteerPayload) {
-  const eventId = "315a4d03-2a7e-4488-b844-6f7494c705e8";
-
-  const payload = {
-    ...data,
-    eventId,
-  };
-
-  console.log("createVolunteerEvent Data:", payload);
+  // console.log("createVolunteerEvent Data:", data);
   try {
-    const response = await API.post("/volunteer/applications", payload);
+    const response = await API.post("/volunteer/applications", data);
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.status === 409) {
       console.log("Conflict: Volunteer application already exists.");
+    } else if (error.response && error.response.status === 403) {
+      console.error(
+        "Only users with ATTENDEE role can apply for volunteer positions.",
+        error
+      );
     } else {
       console.error("Failed to create volunteer event:", error);
     }

@@ -55,9 +55,8 @@ export default function Page() {
         <div className="table-box">
           <DataTable
             rows={Volunteers || []}
-            title="Tasks"
+            title="My Volunteer"
             dataType="volunteer1"
-            showViewDetails={true}
           />
 
           <SwitchPage

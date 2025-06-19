@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (userData && accessToken && refreshToken) {
         setUser(userData);
         console.log("User set in context login:", userData);
+        localStorage.setItem("userId", userData.id);
 
         setAccessToken(accessToken);
         setIsAuthenticated(true);

@@ -17,6 +17,7 @@ export default function CreateEventPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [toggleDate, setToggleDate] = useState(false);
+  const [eventId, setEventId] = useState("");
 
   const user = "Jeffrey Zin";
 
@@ -45,12 +46,13 @@ export default function CreateEventPage() {
     } else if (!volunteerDescription) {
       alert(`Please fill in the required field: ${volunteerDescription}`);
       return;
-    } else if (!!requirementDescription) {
-      alert(`Please fill in the required field: ${!requirementDescription}`);
+    } else if (!requirementDescription) {
+      alert(`Please fill in the required field: ${requirementDescription}`);
       return;
     }
     try {
       const payload = {
+        eventId,
         // title,
         // dateTime: selectedDate.toISOString(),
         whyVolunteer: volunteerDescription,
@@ -65,6 +67,10 @@ export default function CreateEventPage() {
     } catch (error: any) {
       if (error.response && error.response.status === 409) {
         alert("Conflict: You have already Volunteered for this Event");
+      } else if (error.response && error.response.status === 403) {
+        alert(
+          "Only users with ATTENDEE role can apply for volunteer positions."
+        );
       } else {
         alert("Failed to submit volunteer event.");
       }
@@ -109,8 +115,21 @@ export default function CreateEventPage() {
         )}
       </div>
 
+      {/* Event ID Input */}
+      <div>
+        <p className="text-xl font-semibold mb-2">Event ID</p>
+        <input
+          type="text"
+          placeholder="Enter Event ID"
+          className="w-full max-w-xl px-4 py-2 border border-gray-300 rounded-md"
+          value={eventId}
+          onChange={(e) => setEventId(e.target.value)}
+        />
+      </div>
+
       {/* Event Title and Date */}
       <div className="flex flex-col gap-4">
+        <p className="text-xl font-semibold mb-2">Event Title</p>
         <input
           type="text"
           placeholder="Event Title"

@@ -1,16 +1,16 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Header from "../../(components)/Header";
 import DataTable from "../../(components)/DataTable";
-import { useQuery } from "@tanstack/react-query";
-import { EventProps, getEvents } from "@/app/(api)/events_api";
 import Loading from "../../(components)/Loading";
 import ErrorMessage from "../../(components)/ErrorMessage";
+import { getEventsByOrganizerId } from "@/app/(api)/events_api";
 
 export default function Page() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["events"],
-    queryFn: getEvents,
+    queryFn: () => getEventsByOrganizerId(),
     select: (res) => res.data,
   });
 
@@ -26,7 +26,7 @@ export default function Page() {
           title="Details"
           dataType="event"
           showStatusToggle={false}
-          showOpenTaskSidebar={false}
+          showViewDetails={true}
         />
       </div>
     </div>

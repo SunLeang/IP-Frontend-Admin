@@ -141,3 +141,56 @@ export async function updateEvent(
     throw error;
   }
 }
+
+export async function getEventsByOrganizerId(): Promise<{
+  data: EventProps[];
+}> {
+  try {
+    const organizerId = localStorage.getItem("userId");
+    if (!organizerId) throw new Error("User ID not found in token");
+
+    const response = await API.get(`/events/organizer/${organizerId}`);
+    const rawData = response.data;
+
+    const data: EventProps[] = rawData.map((item: any) => {
+      const [datePart, timePartWithMs] = item.dateTime.split("T");
+      const timeFormatted = convertTo12Hour(timePartWithMs.split(".")[0]);
+
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        profileImage: item.profileImage,
+        coverImage: item.coverImage,
+        date: datePart,
+        time: timeFormatted,
+        venue: item.locationDesc,
+        locationImage: item.locationImage,
+        status: item.status,
+        acceptingVolunteers: item.acceptingVolunteers,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        deletedAt: item.deletedAt,
+        categoryId: item.categoryId,
+        organizerId: item.organizerId,
+        category: {
+          id: item.category.id,
+          name: item.category.name,
+          image: item.category.image,
+        },
+        organizer: "",
+        _count: {
+          interestedUsers: item._count.interestedUsers,
+          attendingUsers: item._count.attendingUsers,
+          volunteers: item._count.volunteers,
+        },
+        price: 8.99,
+      };
+    });
+
+    return { data };
+  } catch (error) {
+    console.error("Failed to fetch events by organizer:", error);
+    return { data: [] };
+  }
+}

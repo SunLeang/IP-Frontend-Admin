@@ -2,59 +2,76 @@
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import SwitchPage from "@/components/switch-pages";
-import Loading from "../(components)/Loading";
-import ErrorMessage from "../(components)/ErrorMessage";
-import DataTable from "../(components)/DataTable";
-import { getTasks, getTasksByEventId } from "@/app/(api)/tasks_api";
 import { useParams } from "next/navigation";
 
-type Task = {
-  id: string;
-  description: string;
-  status: string;
-  type: string;
-  date: string;
-};
+import SwitchPage from "@/components/switch-pages";
+
+import { getVolunteers } from "@/app/(api)/volunteers_api";
+import { getTasksByEventId } from "@/app/(api)/tasks_api";
+import ErrorMessage from "../(components)/ErrorMessage";
+import Loading from "../(components)/Loading";
+import DataTable from "../(components)/DataTable";
+import Header from "../(components)/Header";
 
 export default function Page() {
+  const [view, setView] = useState<"volunteers" | "tasks">("volunteers");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [assignTask, setAssignTask] = useState<boolean>(false);
-
   const params = useParams();
   const eventId = params.id as string;
 
   const {
-    data: Tasks,
-    isLoading,
-    isError,
+    data: volunteers,
+    isLoading: loadingVolunteers,
+    isError: errorVolunteers,
+  } = useQuery({
+    queryKey: ["volunteers"],
+    queryFn: getVolunteers,
+    select: (res) => res.data,
+    enabled: view === "volunteers",
+  });
+
+  const {
+    data: tasks,
+    isLoading: loadingTasks,
+    isError: errorTasks,
   } = useQuery({
     queryKey: ["tasks", eventId],
     queryFn: () => getTasksByEventId(eventId),
     select: (res) => res,
+    enabled: view === "tasks",
   });
 
-  if (isLoading) return <Loading message="Loading tasks..." />;
-  if (isError) return <ErrorMessage message="Failed to load tasks." />;
-
-  const totalPages = Math.ceil((Tasks?.length ?? 0) / pageSize);
-  const paginatedTasks = Tasks?.slice(
+  const paginatedTasks = tasks?.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+  const totalPages = Math.ceil((tasks?.length ?? 0) / pageSize);
 
-  return (
-    <>
-      <main className="p-6 space-y-6">
-        <div className="flex justify-between">
-          <h1 className="text-2xl font-bold">Event Tasks</h1>
-          <button className="bg-gray-400 px-2 rounded-lg font-semibold">
-            Create Task
-          </button>
-        </div>
+  const renderView = () => {
+    if (view === "volunteers") {
+      if (loadingVolunteers) return <Loading message="Loading volunteers..." />;
+      if (errorVolunteers)
+        return <ErrorMessage message="Failed to load volunteers." />;
 
-        <div className="table-box">
+      return (
+        <DataTable
+          rows={volunteers || []}
+          title="Volunteers"
+          dataType="volunteer"
+          filterStatus="Attending"
+          showStatusToggle={true}
+          showOpenTaskSidebar={true}
+        />
+      );
+    }
+
+    if (view === "tasks") {
+      if (loadingTasks) return <Loading message="Loading tasks..." />;
+      if (errorTasks) return <ErrorMessage message="Failed to load tasks." />;
+
+      return (
+        <>
           <DataTable
             rows={paginatedTasks || []}
             title="Tasks"
@@ -65,7 +82,7 @@ export default function Page() {
 
           <SwitchPage
             pageSize={pageSize}
-            totalItems={Tasks?.length ?? 0}
+            totalItems={tasks?.length ?? 0}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageSizeChange={(size) => {
@@ -79,8 +96,35 @@ export default function Page() {
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
             }
           />
-        </div>
-      </main>
-    </>
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="flex flex-col p-6 space-y-4">
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={() => setView("volunteers")}
+          className={`px-4 py-2 rounded-lg ${
+            view === "volunteers" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          Volunteers
+        </button>
+        <button
+          onClick={() => setView("tasks")}
+          className={`px-4 py-2 rounded-lg ${
+            view === "tasks" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          Tasks
+        </button>
+      </div>
+
+      <div className="table-box">{renderView()}</div>
+    </div>
   );
 }
