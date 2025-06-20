@@ -135,6 +135,7 @@ export async function updateEvent(
     console.log("object: " + JSON.stringify(data));
     const response = await API.patch(`/events/${id}`, data);
     console.log("Event updated:", response.data);
+    window.location.reload();
     return response.data;
   } catch (error) {
     console.error("Failed to update event:", error);

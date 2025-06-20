@@ -10,8 +10,6 @@ import { updateTask } from "@/app/(api)/tasks_api";
 interface Task {
   id: string;
   name: string;
-  type: string;
-  status: string;
   description: string;
 }
 
@@ -27,8 +25,6 @@ export default function TaskDetailSidebar({
   const [editableTask, setEditableTask] = useState(task);
   const [isEditing, setIsEditing] = useState({
     name: false,
-    type: false,
-    status: false,
     description: false,
   });
 
@@ -42,14 +38,9 @@ export default function TaskDetailSidebar({
 
   const handleSave = async () => {
     try {
-      const { id, ...rest } = editableTask;
-      // ensure status is  correct type
-      const payload = {
-        ...rest,
-        status: (["Pending", "In Progress", "Completed"].includes(rest.status)
-          ? rest.status
-          : "Pending") as "Pending" | "In Progress" | "Completed",
-      };
+      const { id, name, description } = editableTask;
+
+      const payload = { name, description };
 
       await updateTask(id, payload);
 
@@ -77,43 +68,6 @@ export default function TaskDetailSidebar({
         onChange={(val) => handleChange("name", val)}
         onToggle={() => toggleEdit("name")}
       />
-
-      {/* Type */}
-      <Field
-        label="Type"
-        value={editableTask.type}
-        editing={isEditing.type}
-        onChange={(val) => handleChange("type", val)}
-        onToggle={() => toggleEdit("type")}
-      />
-
-      {/* Status */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Status</label>
-        {isEditing.status ? (
-          <select
-            className="w-full border border-gray-300 px-3 py-2 rounded"
-            value={editableTask.status}
-            onChange={(e) =>
-              handleChange(
-                "status",
-                e.target.value as "PENDING" | "IN_PROGRESS" | "COMPLETED"
-              )
-            }
-          >
-            <option value="PENDING">PENDING</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
-        ) : (
-          <div className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded">
-            <span>{editableTask.status}</span>
-            <button onClick={() => toggleEdit("status")}>
-              <Pencil size={18} />
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Description */}
       <div>

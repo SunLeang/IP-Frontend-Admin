@@ -11,6 +11,7 @@ import {
   VolunteerProps,
 } from "@/app/(api)/volunteers_api";
 import { assignTaskToVolunteer, createTask } from "@/app/(api)/tasks_api";
+import { usePathname } from "next/navigation";
 
 interface CreateAssignTaskSidebarProps {
   eventId: string;
@@ -24,44 +25,46 @@ export default function CreateAssignTaskSidebar({
   const [form, setForm] = useState({
     name: "",
     type: "",
-    status: "Pending" as "Pending" | "In Progress" | "Completed",
+    dueDate: "",
+    // status: "Pending" as "Pending" | "In Progress" | "Completed",
     description: "",
-    volunteerId: "",
   });
 
-  const [volunteers, setVolunteers] = useState<VolunteerProps[]>([]);
-
-  useEffect(() => {
-    const loadVolunteers = async () => {
-      const result = await getVolunteersByEventId(eventId);
-      setVolunteers(result.data);
-    };
-    loadVolunteers();
-  }, [eventId]);
+  const pathname = usePathname();
+  const eventIdPath = pathname.startsWith("/admin/events/")
+    ? pathname.split("/")[3]
+    : null;
 
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
+    console.log("object: " + JSON.stringify(form));
+    console.log("2: " + eventIdPath);
+
     try {
       const task = await createTask({
         name: form.name,
         type: form.type,
-        status: form.status,
         description: form.description,
-        eventId,
+        dueDate: form.dueDate,
+        eventId: eventIdPath ?? eventId,
       });
 
-      if (form.volunteerId) {
-        await assignTaskToVolunteer(task.id, form.volunteerId);
-      }
-
-      alert("Task created and assigned!");
+      alert("Task created");
       onClose();
-    } catch (error) {
-      console.error("Error creating or assigning task", error);
-      alert("Something went wrong.");
+    } catch (error: any) {
+      if (error.response && error.response.status === 403) {
+        console.error(
+          "You can only create tasks for events you organize.",
+          error
+        );
+        alert("You can only create tasks for events you organize!");
+      } else {
+        console.error("Error creating task", error);
+        alert("Error creating task.");
+      }
     }
   };
 
@@ -91,6 +94,16 @@ export default function CreateAssignTaskSidebar({
       </div>
 
       <div className="space-y-2">
+        <label className="text-sm font-medium">Due Date</label>
+        <Input
+          type="datetime-local"
+          value={form.dueDate}
+          onChange={(e) => handleChange("dueDate", e.target.value)}
+          placeholder="Select due date and time"
+        />
+      </div>
+
+      {/* <div className="space-y-2">
         <label className="text-sm font-medium">Status</label>
         <select
           className="w-full border border-gray-300 px-3 py-2 rounded"
@@ -106,7 +119,7 @@ export default function CreateAssignTaskSidebar({
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
         </select>
-      </div>
+      </div> */}
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Description</label>
@@ -117,24 +130,8 @@ export default function CreateAssignTaskSidebar({
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Assign to Volunteer</label>
-        <select
-          className="w-full border border-gray-300 px-3 py-2 rounded"
-          value={form.volunteerId}
-          onChange={(e) => handleChange("volunteerId", e.target.value)}
-        >
-          <option value="">-- Select a volunteer --</option>
-          {volunteers.map((v: any) => (
-            <option key={v.id} value={v.user.id}>
-              {v.user.fullName}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <Button className="w-full" onClick={handleSubmit}>
-        Create & Assign Task
+        Create Task
       </Button>
     </div>
   );

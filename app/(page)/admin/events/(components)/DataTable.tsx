@@ -61,12 +61,12 @@ const headersMap: Record<DataType, string[]> = {
   volunteer1: ["No.", "Name", "Date", "Status", "Event", "Type", " "],
   task: [
     "No.",
-    "name",
-    "description",
-    "status",
-    "type",
-    "dueDate",
-    "event",
+    "Name",
+    "Description",
+    "Status",
+    "Type",
+    "Due Date",
+    "Event",
     "",
   ],
 };
@@ -266,6 +266,7 @@ export default function DataTable({
             <td className="py-2 px-2">{index + 1}</td>
             <td className="py-2 px-2">{t.name}</td>
             <td className="py-2 px-2">{t.description}</td>
+
             <td className="py-2 px-2">
               <span
                 className={`px-2 py-2 rounded-full text-xs font-medium ${

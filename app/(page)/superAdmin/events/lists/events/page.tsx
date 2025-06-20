@@ -26,7 +26,6 @@ export default function Page() {
           title="Details"
           dataType="event"
           showUpdateEvent={true}
-          // showAssignTask={true}
         />
       </div>
     </div>

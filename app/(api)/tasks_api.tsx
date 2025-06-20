@@ -47,7 +47,8 @@ export interface CreateTaskPayload {
   name: string;
   description: string;
   type: string;
-  status: "Pending" | "In Progress" | "Completed";
+  // status: "Pending" | "In Progress" | "Completed";
+  dueDate: string;
   eventId: string;
 }
 

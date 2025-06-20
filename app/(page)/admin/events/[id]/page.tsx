@@ -11,7 +11,6 @@ import { getTasksByEventId } from "@/app/(api)/tasks_api";
 import ErrorMessage from "../(components)/ErrorMessage";
 import Loading from "../(components)/Loading";
 import DataTable from "../(components)/DataTable";
-import Header from "../(components)/Header";
 
 export default function Page() {
   const [view, setView] = useState<"volunteers" | "tasks">("volunteers");

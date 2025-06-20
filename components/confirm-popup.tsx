@@ -82,7 +82,7 @@ export default function ConfirmPopup({
             onOpenTask();
           }}
         >
-          Open Task Sidebar
+          Open Volunteer Sidebar
         </button>
       )}
 

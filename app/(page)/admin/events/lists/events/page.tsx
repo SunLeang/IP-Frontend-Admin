@@ -26,7 +26,7 @@ export default function Page() {
           title="Details"
           dataType="event"
           showStatusToggle={false}
-          showViewDetails={true}
+          showUpdateEvent={true}
         />
       </div>
     </div>
