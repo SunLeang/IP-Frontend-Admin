@@ -26,7 +26,6 @@ export default function CreateAssignTaskSidebar({
     name: "",
     type: "",
     dueDate: "",
-    // status: "Pending" as "Pending" | "In Progress" | "Completed",
     description: "",
   });
 

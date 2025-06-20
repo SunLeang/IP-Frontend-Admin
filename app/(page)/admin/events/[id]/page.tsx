@@ -77,6 +77,7 @@ export default function Page() {
             dataType="task"
             showAssignTask={true}
             showViewDetails={true}
+            showAssignTaskToVolunteer={true}
           />
 
           <SwitchPage

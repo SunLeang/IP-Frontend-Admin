@@ -16,6 +16,7 @@ import CreateAssignTaskSidebar from "@/components/CreateAssignTaskSidebar";
 import { usePathname } from "next/navigation";
 import { TaskProps } from "@/app/(api)/tasks_api";
 import EventDetailSidebar from "@/components/event-detail-sidebar";
+import AssignTaskSidebar from "@/components/assign-task-sidebar";
 
 type DataType = "event" | "volunteer" | "attendance" | "volunteer1" | "task";
 
@@ -33,6 +34,7 @@ interface DataTableProps {
   showAssignTask?: boolean;
   showViewDetails?: boolean;
   showUpdateEvent?: boolean;
+  showAssignTaskToVolunteer?: boolean;
 }
 
 const headersMap: Record<DataType, string[]> = {
@@ -85,6 +87,7 @@ export default function DataTable({
   showAssignTask,
   showViewDetails,
   showUpdateEvent,
+  showAssignTaskToVolunteer,
 }: DataTableProps) {
   const pathname = usePathname();
   const eventIdFromPath = pathname.startsWith("/admin/events/")
@@ -105,6 +108,7 @@ export default function DataTable({
   const [showDetailCreateTaskSidebar, setShowDetailCreateTaskSidebar] =
     useState(false);
   const [showUpdateEventSidebar, setShowUpdateEventSidebar] = useState(false);
+  const [showAssignTaskSidebar, setShowAssignTaskSidebar] = useState(false);
 
   const handlePopupClick = (e: React.MouseEvent, row: any) => {
     e.stopPropagation();
@@ -376,10 +380,15 @@ export default function DataTable({
           onCancel={() => setPopupPosition(null)}
           showView={showView}
           showAssignTask={showAssignTask}
+          showAssignTaskToVolunteer={showAssignTaskToVolunteer}
           showViewDetails={showViewDetails}
           onAssignTask={() => {
             setPopupPosition(null);
             setShowDetailCreateTaskSidebar(true);
+          }}
+          onAssignTaskToVolunteer={() => {
+            setPopupPosition(null);
+            setShowAssignTaskSidebar(true);
           }}
           onViewDetails={() => {
             setPopupPosition(null);
@@ -411,6 +420,14 @@ export default function DataTable({
         <CreateAssignTaskSidebar
           eventId={eventIdFromPath ?? ""}
           onClose={() => setShowDetailCreateTaskSidebar(false)}
+        />
+      )}
+
+      {showAssignTaskSidebar && selectedRow && (
+        <AssignTaskSidebar
+          taskId={selectedRow.id}
+          eventId={eventIdFromPath ?? ""}
+          onClose={() => setShowAssignTaskSidebar(false)}
         />
       )}
 

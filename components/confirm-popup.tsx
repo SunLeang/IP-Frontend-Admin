@@ -14,6 +14,8 @@ interface ConfirmPopupProps {
   showViewDetails?: boolean;
   showUpdateEvent?: boolean;
   onUpdateEvent?: () => void;
+  showAssignTaskToVolunteer?: boolean;
+  onAssignTaskToVolunteer?: () => void;
 }
 
 export default function ConfirmPopup({
@@ -30,6 +32,8 @@ export default function ConfirmPopup({
   onViewDetails,
   showUpdateEvent = false,
   onUpdateEvent,
+  showAssignTaskToVolunteer = false,
+  onAssignTaskToVolunteer,
 }: ConfirmPopupProps) {
   return (
     <div
@@ -60,6 +64,18 @@ export default function ConfirmPopup({
           className="w-full text-left px-4 py-2 hover:bg-gray-100"
         >
           Create Task
+        </button>
+      )}
+
+      {showAssignTaskToVolunteer && onAssignTaskToVolunteer && (
+        <button
+          onClick={() => {
+            onAssignTaskToVolunteer();
+            onCancel();
+          }}
+          className="w-full text-left px-4 py-2 hover:bg-gray-100"
+        >
+          Assign Task
         </button>
       )}
 
