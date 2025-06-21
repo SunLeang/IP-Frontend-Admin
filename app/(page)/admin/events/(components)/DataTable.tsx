@@ -17,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { TaskProps } from "@/app/(api)/tasks_api";
 import EventDetailSidebar from "@/components/event-detail-sidebar";
 import AssignTaskSidebar from "@/components/assign-task-sidebar";
+import AssignVolunteerSidebar from "@/components/assign-task-sidebar";
 
 type DataType = "event" | "volunteer" | "attendance" | "volunteer1" | "task";
 
@@ -60,7 +61,7 @@ const headersMap: Record<DataType, string[]> = {
     "Registered At",
     " ",
   ],
-  volunteer1: ["No.", "Name", "Date", "Status", "Event", "Type", " "],
+  volunteer1: ["No.", "Name", "Date", "Status", "Event", " "],
   task: [
     "No.",
     "Name",
@@ -221,7 +222,7 @@ export default function DataTable({
         return (
           <>
             <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{v.name}</td>
+            <td className="py-2 px-2">{v.user?.fullName}</td>
             <td className="py-2 px-2">{v.appliedAt}</td>
             <td className="py-2 px-2">
               <span
@@ -235,7 +236,7 @@ export default function DataTable({
               </span>
             </td>
             <td className="py-2 px-2">{v.event.name}</td>
-            <td className="py-2 px-2">{v.cvPath}</td>
+            {/* <td className="py-2 px-2">{v.user?.fullName}</td> */}
             {common}
           </>
         );
@@ -424,10 +425,13 @@ export default function DataTable({
       )}
 
       {showAssignTaskSidebar && selectedRow && (
-        <AssignTaskSidebar
-          taskId={selectedRow.id}
-          eventId={eventIdFromPath ?? ""}
-          onClose={() => setShowAssignTaskSidebar(false)}
+        <AssignVolunteerSidebar
+          volunteerId={selectedRow.user.id}
+          eventId={selectedRow.eventId}
+          onClose={() => {
+            setShowAssignTaskSidebar(false);
+            console.log("sss: " + JSON.stringify(selectedRow));
+          }}
         />
       )}
 

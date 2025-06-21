@@ -1,3 +1,4 @@
+import axios from "axios";
 import API from "../utils/AxiosInstance";
 
 export interface Assignment {
@@ -75,7 +76,9 @@ export async function getTasks(): Promise<TaskProps[]> {
 
 export async function getTasksByEventId(eventId: string): Promise<TaskProps[]> {
   try {
+    console.log("eventid: " + eventId);
     const response = await API.get(`/tasks/events/${eventId}`);
+    console.log("response: " + JSON.stringify(response.data));
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch tasks for event:", error);
@@ -118,6 +121,11 @@ export async function assignTaskToVolunteer(
   taskId: string,
   volunteerId: string
 ) {
+  console.log("TaskID: " + taskId);
+  console.log(
+    "userId needed not actually volunteerId omg::FFF: " + volunteerId
+  );
+
   try {
     const response = await API.post(`/tasks/${taskId}/assign`, {
       volunteerId,
@@ -125,12 +133,18 @@ export async function assignTaskToVolunteer(
     console.log("Task assigned:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Failed to assign task:", error);
-    throw error;
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || "Something went wrong";
+      alert(message);
+    } else {
+      alert("Unknown error occurred.");
+    }
+
+    return null;
   }
 }
 
-// REMOVE VOLUNTEER FROM TASK
+// remove volunteer from task
 export async function removeTaskAssignment(taskId: string) {
   try {
     const response = await API.delete(`/tasks/${taskId}/assign`);
@@ -142,7 +156,6 @@ export async function removeTaskAssignment(taskId: string) {
   }
 }
 
-// GET VOLUNTEERS ASSIGNED TO TASKS OF AN EVENT
 export async function getTaskVolunteersByEventId(eventId: string) {
   try {
     const response = await API.get(`/tasks/events/${eventId}/volunteers`);

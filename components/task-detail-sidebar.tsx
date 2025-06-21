@@ -11,6 +11,7 @@ interface Task {
   id: string;
   name: string;
   description: string;
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED";
 }
 
 interface TaskDetailSidebarProps {
@@ -26,6 +27,7 @@ export default function TaskDetailSidebar({
   const [isEditing, setIsEditing] = useState({
     name: false,
     description: false,
+    status: false,
   });
 
   const toggleEdit = (field: keyof typeof isEditing) => {
@@ -38,9 +40,9 @@ export default function TaskDetailSidebar({
 
   const handleSave = async () => {
     try {
-      const { id, name, description } = editableTask;
+      const { id, name, description, status } = editableTask;
 
-      const payload = { name, description };
+      const payload = { name, description, status };
 
       await updateTask(id, payload);
 
@@ -86,6 +88,16 @@ export default function TaskDetailSidebar({
           </button>
         </div>
       </div>
+
+      <Field
+        label="Status"
+        value={editableTask.status}
+        editing={isEditing.status}
+        onChange={(val) => handleChange("status", val)}
+        onToggle={() => toggleEdit("status")}
+        type="select"
+        options={["PENDING", "IN_PROGRESS", "COMPLETED"]}
+      />
 
       <Button onClick={handleSave}>Done</Button>
     </div>

@@ -12,18 +12,9 @@ import {
 import DataTable from "../events/(components)/DataTable";
 import Loading from "../events/(components)/Loading";
 import ErrorMessage from "../events/(components)/ErrorMessage";
-import { getVolunteers } from "@/app/(api)/volunteers_api";
+import { getAllVolunteersByOrganizer } from "@/app/(api)/volunteers_api";
 import { useQuery } from "@tanstack/react-query";
 import SwitchPage from "@/components/switch-pages";
-import { getTasks } from "@/app/(api)/tasks_api";
-
-type Task = {
-  id: string;
-  description: string;
-  status: string;
-  type: string;
-  date: string;
-};
 
 export default function Page() {
   const [pageSize, setPageSize] = useState(10);
@@ -35,7 +26,7 @@ export default function Page() {
     isError,
   } = useQuery({
     queryKey: ["volunteers"],
-    queryFn: getVolunteers,
+    queryFn: getAllVolunteersByOrganizer,
     select: (res) => res.data,
   });
   const totalPages = Math.ceil((Volunteers?.length ?? 0) / pageSize);
@@ -57,6 +48,8 @@ export default function Page() {
             rows={Volunteers || []}
             title="My Volunteer"
             dataType="volunteer1"
+            showAssignTaskToVolunteer={true}
+            showOpenTaskSidebar={true}
           />
 
           <SwitchPage

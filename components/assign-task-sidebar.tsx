@@ -2,53 +2,55 @@
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { X } from "lucide-react";
-import { assignTaskToVolunteer } from "@/app/(api)/tasks_api";
+import {
+  assignTaskToVolunteer,
+  getTasksByEventId,
+  TaskProps,
+} from "@/app/(api)/tasks_api";
 import {
   getVolunteersByEventId,
   VolunteerProps,
 } from "@/app/(api)/volunteers_api";
+import axios from "axios";
 
-interface AssignVolunteerSidebarProps {
-  taskId: string;
+interface AssignTaskSidebarProps {
+  volunteerId: string;
   eventId: string;
   onClose: () => void;
 }
 
 export default function AssignVolunteerSidebar({
-  taskId,
+  volunteerId,
   eventId,
   onClose,
-}: AssignVolunteerSidebarProps) {
-  const [volunteers, setVolunteers] = useState<VolunteerProps[]>([]);
-  const [selectedVolunteerId, setSelectedVolunteerId] = useState("");
+}: AssignTaskSidebarProps) {
+  const [tasks, setTasks] = useState<TaskProps[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState("");
 
   useEffect(() => {
-    const fetchVolunteers = async () => {
+    const fetchTasks = async () => {
       try {
-        const data = await getVolunteersByEventId(eventId);
-        setVolunteers(data.data);
+        const data = await getTasksByEventId(eventId);
+        setTasks(data);
       } catch (error) {
-        console.error("Failed to fetch volunteers:", error);
+        console.error("Failed to fetch tasks:", error);
       }
     };
 
-    fetchVolunteers();
+    fetchTasks();
   }, [eventId]);
 
   const handleAssign = async () => {
-    if (!selectedVolunteerId) {
-      alert("Please select a volunteer");
+    if (!selectedTaskId) {
+      alert("Please select a task");
       return;
     }
 
-    console.log("VolunteerId: " + selectedVolunteerId);
-    try {
-      await assignTaskToVolunteer(taskId, selectedVolunteerId);
-      alert("Volunteer assigned to task!");
+    const result = await assignTaskToVolunteer(selectedTaskId, volunteerId);
+
+    if (result) {
+      alert("Task assigned to volunteer!");
       onClose();
-    } catch (error) {
-      console.error("Failed to assign volunteer:", error);
-      alert("Failed to assign volunteer.");
     }
   };
 
@@ -63,13 +65,13 @@ export default function AssignVolunteerSidebar({
         <label className="text-sm font-medium">Select a Volunteer</label>
         <select
           className="w-full border border-gray-300 px-3 py-2 rounded"
-          value={selectedVolunteerId}
-          onChange={(e) => setSelectedVolunteerId(e.target.value)}
+          value={selectedTaskId}
+          onChange={(e) => setSelectedTaskId(e.target.value)}
         >
-          <option value="">-- Choose Volunteer --</option>
-          {volunteers.map((volunteer) => (
-            <option key={volunteer.id} value={volunteer.id}>
-              {volunteer.user?.fullName} ({volunteer.user?.email})
+          <option value="">-- Choose Task --</option>
+          {tasks.map((task) => (
+            <option key={task.id} value={task.id}>
+              {task.name}
             </option>
           ))}
         </select>
