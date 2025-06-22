@@ -41,6 +41,26 @@ export async function getUsers(): Promise<{ data: UserProps[] }> {
   }
 }
 
+export async function getUsersAttendees(): Promise<{ data: UserProps[] }> {
+  try {
+    const response = await API.get("/users/attendees");
+    return { data: response.data };
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+    return { data: [] };
+  }
+}
+
+export async function getUsersOrganizers(): Promise<{ data: UserProps[] }> {
+  try {
+    const response = await API.get("/users/organizers");
+    return { data: response.data };
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+    return { data: [] };
+  }
+}
+
 export async function getUserById(id: string): Promise<UserProps | null> {
   try {
     const response = await API.get(`/users/${id}`);

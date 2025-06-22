@@ -69,11 +69,18 @@ export default function Sidebar() {
     ];
 
     if (rolePrefix === "superAdmin") {
-      items.push({
-        label: "Organizer",
-        icon: <UserSquare2 className="w-5 h-5" />,
-        href: `/${rolePrefix}/organizer`,
-      });
+      items.push(
+        {
+          label: "Organizer",
+          icon: <UserSquare2 className="w-5 h-5" />,
+          href: `/${rolePrefix}/organizer`,
+        },
+        {
+          label: "Users",
+          icon: <UserSquare2 className="w-5 h-5" />,
+          href: `/${rolePrefix}/users`,
+        }
+      );
     }
 
     return items;

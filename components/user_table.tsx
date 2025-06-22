@@ -3,22 +3,26 @@
 import { useState, useMemo, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import ConfirmPopupBox from "./ConfirmPopupBox";
+import ConfirmPopupBox from "../app/(page)/superAdmin/organizer/(components)/ConfirmPopupBox";
 import { changeUserRole, deleteUser, UserProps } from "@/app/(api)/user_api";
 import { getEventCountByOrganizerId } from "@/app/(api)/events_api";
-import UserSidebar from "./UserSidebar";
+import UserSidebar from "../app/(page)/superAdmin/organizer/(components)/UserSidebar";
 
 interface UserTableProps {
   rows: UserProps[];
   onDelete?: (row: UserProps) => void;
   onRoleChange?: (row: UserProps) => void;
   onSave?: (row: UserProps) => void;
+  onCreate?: () => void;
+  enableCreate?: boolean;
 }
 
 export default function UserTable({
   rows,
   onDelete,
   onRoleChange,
+  onCreate,
+  enableCreate = false,
 }: UserTableProps) {
   const [search, setSearch] = useState("");
   const [popupPosition, setPopupPosition] = useState<{
@@ -53,17 +57,6 @@ export default function UserTable({
     }
   };
 
-  const handleRoleToggle = async (row: UserProps) => {
-    const newRole = row.currentRole === "VOLUNTEER" ? "ATTENDEE" : "VOLUNTEER";
-    try {
-      await changeUserRole(row.id, newRole);
-      onRoleChange?.({ ...row, currentRole: newRole });
-      setPopupPosition(null);
-    } catch (err) {
-      console.error("Failed to change user role:", err);
-    }
-  };
-
   const handleEdit = () => {
     if (selectedRow) {
       setEditingUser(selectedRow);
@@ -73,8 +66,12 @@ export default function UserTable({
   };
 
   const handleCreate = () => {
-    setEditingUser(null);
-    setShowSidebar(true);
+    if (onCreate) {
+      onCreate();
+    } else {
+      setEditingUser(null);
+      setShowSidebar(true);
+    }
     setPopupPosition(null);
   };
 
@@ -129,7 +126,7 @@ export default function UserTable({
             <th className="py-2 px-2">Name</th>
             <th className="py-2 px-2">Events</th>
             <th className="py-2 px-2">Current Role</th>
-            <th className="py-2 px-2">Actions</th>
+            <th className="py-2 px-2"> </th>
           </tr>
         </thead>
         <tbody>
@@ -158,6 +155,7 @@ export default function UserTable({
           onEdit={handleEdit}
           onCreate={handleCreate}
           onCancel={() => setPopupPosition(null)}
+          enableCreate={enableCreate}
         />
       )}
 

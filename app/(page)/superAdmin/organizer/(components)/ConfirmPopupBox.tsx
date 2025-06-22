@@ -5,6 +5,7 @@ interface ConfirmPopupProps {
   onChangeRole?: () => void;
   onEdit?: () => void;
   onCreate?: () => void;
+  enableCreate?: boolean;
 }
 
 export default function ConfirmPopupBox({
@@ -14,6 +15,7 @@ export default function ConfirmPopupBox({
   onChangeRole,
   onEdit,
   onCreate,
+  enableCreate = false,
 }: ConfirmPopupProps) {
   return (
     <div
@@ -33,7 +35,7 @@ export default function ConfirmPopupBox({
           Edit
         </button>
       )}
-      {onCreate && (
+      {enableCreate && onCreate && (
         <button
           type="button"
           className="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left text-green-600"
