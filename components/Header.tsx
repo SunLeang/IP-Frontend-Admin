@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getProfile, ProfileProps } from "@/app/(api)/profile_api";
+import NotificationDropdown from "./notification-dropdown";
 
 export default function Header() {
   const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
@@ -69,7 +70,9 @@ export default function Header() {
         </div>
 
         <div className="flex justify-center items-center gap-6">
-          <BellDot color="blue" />
+          <div className="ml-auto flex items-center space-x-4 mt-2">
+            <NotificationDropdown />
+          </div>
           <div className="w-7">
             <img src="/GBR.svg" alt="eng-flag" className="rounded-sm" />
           </div>
