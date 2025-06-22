@@ -25,7 +25,9 @@ interface UserProps {
 
 interface AuthContextType {
   user: UserProps;
-  loginApi: (user: UserProps) => Promise<void>;
+  loginApi: (
+    user: UserProps
+  ) => Promise<{ success: boolean; message?: string }>;
   logoutApi: () => void;
   isAuthReady: boolean;
   isAuthenticated: boolean;
@@ -41,7 +43,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserProps>(undefined as any);
 
-  const loginApi = async (user: UserProps) => {
+  const loginApi = async (
+    user: UserProps
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await API.post(`/auth/login`, {
         email: user.email,
@@ -50,9 +54,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const { user: userData, accessToken, refreshToken } = response.data;
 
+      // Role check
+      const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
+      if (!allowedRoles.includes(userData.systemRole)) {
+        return { success: false, message: "Unauthorized role. Access denied." };
+      }
+
       if (userData && accessToken && refreshToken) {
         setUser(userData);
-        console.log("User set in context login:", userData);
         localStorage.setItem("userId", userData.id);
 
         setAccessToken(accessToken);
@@ -62,18 +71,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
-        // console.log("Role:" + userData.systemRole);
-
         if (userData.systemRole === "SUPER_ADMIN") {
           router.push("/superAdmin/dashboard");
         } else if (userData.systemRole === "ADMIN") {
           router.push("/admin/dashboard");
         }
+
+        return { success: true };
       } else {
-        throw new Error("Login failed");
+        return {
+          success: false,
+          message: "Login failed due to missing credentials.",
+        };
       }
     } catch (error) {
-      throw new Error("Error Login Api.");
+      return {
+        success: false,
+        message: "Error during login. Please try again.",
+      };
     }
   };
 

@@ -63,14 +63,15 @@ export default function LoginForm() {
     }, 300);
   };
 
-  const handleLogin = () => {
-    loginApi({
+  const handleLogin = async () => {
+    const result = await loginApi({
       ...formValues,
-      systemRole: loginType === "admin" ? "admin" : "superAdmin",
+      systemRole: loginType === "admin" ? "ADMIN" : "SUPER_ADMIN",
     });
-    // console.log("login page");
 
-    // router.push(`/${loginType}/dashboard`);
+    if (!result.success) {
+      alert(result.message || "Login failed.");
+    }
   };
 
   return (
