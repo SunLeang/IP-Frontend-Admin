@@ -47,9 +47,16 @@ export interface CreateEventPayload {
 }
 
 export async function createEvent(data: CreateEventPayload) {
+  // for (let [key, value] of data.entries()) {
+  //   console.log(`${key}: `, value);
+  // }
+
   try {
-    const response = await API.post("/events", data);
-    console.log("Event created:", response.data);
+    const response = await API.post("/events", data, {
+      // headers: {
+      //   "Content-Type": "multipart/form-data",
+      // },
+    });
     return response.data;
   } catch (error) {
     console.error("Failed to create event:", error);
@@ -193,5 +200,24 @@ export async function getEventsByOrganizerId(): Promise<{
   } catch (error) {
     console.error("Failed to fetch events by organizer:", error);
     return { data: [] };
+  }
+}
+
+export async function toggleAcceptingVolunteers(
+  id: string,
+  acceptingVolunteers: boolean
+) {
+  try {
+    console.log("object: " + JSON.stringify(acceptingVolunteers));
+
+    const response = await API.patch(
+      `/events/${id}/volunteers/toggle`,
+      acceptingVolunteers
+    );
+    console.log("Event toggleAcceptingVolunteer:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update event toggleAcceptingVolunteer:", error);
+    throw error;
   }
 }

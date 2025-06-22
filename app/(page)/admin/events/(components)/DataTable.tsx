@@ -47,8 +47,9 @@ const headersMap: Record<DataType, string[]> = {
     "Location",
     "Date",
     "Time",
-    "Organizer",
-    "",
+    // "Organizer",
+    "Accepting Volunteers",
+    " ",
   ],
   volunteer: ["No.", "Event", "Name", "Status", "Date", " "],
   attendance: [
@@ -199,7 +200,10 @@ export default function DataTable({
             <td className="py-2 px-2">{e.venue}</td>
             <td className="py-2 px-2">{e.date}</td>
             <td className="py-2 px-2">{e.time}</td>
-            <td className="py-2 px-2">{e.organizer}</td>
+            {/* <td className="py-2 px-2">{e.organizer}</td> */}
+            <td className="py-2 px-2 text-center">
+              {e.acceptingVolunteers.toString()}
+            </td>
             {common}
           </>
         );
