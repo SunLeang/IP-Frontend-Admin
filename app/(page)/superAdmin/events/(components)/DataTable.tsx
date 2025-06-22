@@ -16,6 +16,8 @@ import CreateAssignTaskSidebar from "@/components/CreateAssignTaskSidebar";
 import { usePathname } from "next/navigation";
 import { TaskProps } from "@/app/(api)/tasks_api";
 import EventDetailSidebar from "@/components/event-detail-sidebar";
+import AssignTaskSidebar from "@/components/assign-task-sidebar";
+import AssignVolunteerSidebar from "@/components/assign-task-sidebar";
 
 type DataType = "event" | "volunteer" | "attendance" | "volunteer1" | "task";
 
@@ -33,6 +35,7 @@ interface DataTableProps {
   showAssignTask?: boolean;
   showViewDetails?: boolean;
   showUpdateEvent?: boolean;
+  showAssignTaskToVolunteer?: boolean;
 }
 
 const headersMap: Record<DataType, string[]> = {
@@ -44,8 +47,9 @@ const headersMap: Record<DataType, string[]> = {
     "Location",
     "Date",
     "Time",
-    "Organizer",
-    "",
+    // "Organizer",
+    "Accepting Volunteers",
+    " ",
   ],
   volunteer: ["No.", "Event", "Name", "Status", "Date", " "],
   attendance: [
@@ -58,15 +62,15 @@ const headersMap: Record<DataType, string[]> = {
     "Registered At",
     " ",
   ],
-  volunteer1: ["No.", "Name", "Date", "Status", "Event", "Type", " "],
+  volunteer1: ["No.", "Name", "Date", "Status", "Event", " "],
   task: [
     "No.",
-    "name",
-    "description",
-    "status",
-    "type",
-    "dueDate",
-    "event",
+    "Name",
+    "Description",
+    "Status",
+    "Type",
+    "Due Date",
+    "Event",
     "",
   ],
 };
@@ -85,6 +89,7 @@ export default function DataTable({
   showAssignTask,
   showViewDetails,
   showUpdateEvent,
+  showAssignTaskToVolunteer,
 }: DataTableProps) {
   const pathname = usePathname();
   const eventIdFromPath = pathname.startsWith("/admin/events/")
@@ -105,6 +110,7 @@ export default function DataTable({
   const [showDetailCreateTaskSidebar, setShowDetailCreateTaskSidebar] =
     useState(false);
   const [showUpdateEventSidebar, setShowUpdateEventSidebar] = useState(false);
+  const [showAssignTaskSidebar, setShowAssignTaskSidebar] = useState(false);
 
   const handlePopupClick = (e: React.MouseEvent, row: any) => {
     e.stopPropagation();
@@ -194,7 +200,10 @@ export default function DataTable({
             <td className="py-2 px-2">{e.venue}</td>
             <td className="py-2 px-2">{e.date}</td>
             <td className="py-2 px-2">{e.time}</td>
-            <td className="py-2 px-2">{e.organizer}</td>
+            {/* <td className="py-2 px-2">{e.organizer}</td> */}
+            <td className="py-2 px-2 text-center">
+              {e.acceptingVolunteers.toString()}
+            </td>
             {common}
           </>
         );
@@ -217,7 +226,7 @@ export default function DataTable({
         return (
           <>
             <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{v.name}</td>
+            <td className="py-2 px-2">{v.user?.fullName}</td>
             <td className="py-2 px-2">{v.appliedAt}</td>
             <td className="py-2 px-2">
               <span
@@ -231,7 +240,7 @@ export default function DataTable({
               </span>
             </td>
             <td className="py-2 px-2">{v.event.name}</td>
-            <td className="py-2 px-2">{v.cvPath}</td>
+            {/* <td className="py-2 px-2">{v.user?.fullName}</td> */}
             {common}
           </>
         );
@@ -266,6 +275,7 @@ export default function DataTable({
             <td className="py-2 px-2">{index + 1}</td>
             <td className="py-2 px-2">{t.name}</td>
             <td className="py-2 px-2">{t.description}</td>
+
             <td className="py-2 px-2">
               <span
                 className={`px-2 py-2 rounded-full text-xs font-medium ${
@@ -375,10 +385,15 @@ export default function DataTable({
           onCancel={() => setPopupPosition(null)}
           showView={showView}
           showAssignTask={showAssignTask}
+          showAssignTaskToVolunteer={showAssignTaskToVolunteer}
           showViewDetails={showViewDetails}
           onAssignTask={() => {
             setPopupPosition(null);
             setShowDetailCreateTaskSidebar(true);
+          }}
+          onAssignTaskToVolunteer={() => {
+            setPopupPosition(null);
+            setShowAssignTaskSidebar(true);
           }}
           onViewDetails={() => {
             setPopupPosition(null);
@@ -410,6 +425,17 @@ export default function DataTable({
         <CreateAssignTaskSidebar
           eventId={eventIdFromPath ?? ""}
           onClose={() => setShowDetailCreateTaskSidebar(false)}
+        />
+      )}
+
+      {showAssignTaskSidebar && selectedRow && (
+        <AssignVolunteerSidebar
+          volunteerId={selectedRow.user.id}
+          eventId={selectedRow.eventId}
+          onClose={() => {
+            setShowAssignTaskSidebar(false);
+            console.log("sss: " + JSON.stringify(selectedRow));
+          }}
         />
       )}
 

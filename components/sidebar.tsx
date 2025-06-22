@@ -9,6 +9,8 @@ import {
   MessagesSquare,
   Grid2X2,
   CircleGauge,
+  UserCogIcon,
+  UserSquare2,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -42,8 +44,8 @@ export default function Sidebar() {
     setMounted(true);
   }, []);
 
-  const navItems = useMemo(
-    () => [
+  const navItems = useMemo(() => {
+    const items = [
       {
         label: "Dashboard",
         icon: <CircleGauge className="w-5 h-5" />,
@@ -64,9 +66,18 @@ export default function Sidebar() {
         icon: <MessagesSquare className="w-5 h-5" />,
         href: `/${rolePrefix}/announcement`,
       },
-    ],
-    [rolePrefix]
-  );
+    ];
+
+    if (rolePrefix === "superAdmin") {
+      items.push({
+        label: "Organizer",
+        icon: <UserSquare2 className="w-5 h-5" />,
+        href: `/${rolePrefix}/organizer`,
+      });
+    }
+
+    return items;
+  }, [rolePrefix]);
 
   if (!mounted || !pathname) return null;
 

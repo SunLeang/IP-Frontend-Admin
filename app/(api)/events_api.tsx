@@ -221,3 +221,18 @@ export async function toggleAcceptingVolunteers(
     throw error;
   }
 }
+
+export async function getEventCountByOrganizerId(
+  organizerId: string
+): Promise<number> {
+  try {
+    const response = await API.get(`/events/organizer/${organizerId}`);
+    return response.data.length;
+  } catch (error) {
+    console.error(
+      `Failed to get event count for organizer ${organizerId}:`,
+      error
+    );
+    return 0;
+  }
+}
