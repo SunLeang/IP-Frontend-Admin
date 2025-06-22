@@ -45,7 +45,7 @@ export default function TaskBar({ onClose, volunteerId }: TaskBarProps) {
           </div>
           <div>
             <span className="font-semibold">Gender: </span>
-            {volunteer?.user?.gender.toLocaleLowerCase()}
+            {volunteer?.user?.gender}
           </div>
           <div>
             <span className="font-semibold">Age: </span> {volunteer?.user?.age}
