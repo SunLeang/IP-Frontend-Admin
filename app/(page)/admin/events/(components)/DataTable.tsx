@@ -36,6 +36,7 @@ interface DataTableProps {
   showViewDetails?: boolean;
   showUpdateEvent?: boolean;
   showAssignTaskToVolunteer?: boolean;
+  eventName?: string;
 }
 
 const headersMap: Record<DataType, string[]> = {
@@ -90,6 +91,7 @@ export default function DataTable({
   showViewDetails,
   showUpdateEvent,
   showAssignTaskToVolunteer,
+  eventName,
 }: DataTableProps) {
   const pathname = usePathname();
   const eventIdFromPath = pathname.startsWith("/admin/events/")
@@ -213,8 +215,8 @@ export default function DataTable({
         return (
           <>
             <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{v.event.name}</td>
-            <td className="py-2 px-2">{v.name}</td>
+            <td className="py-2 px-2">{eventName}</td>
+            <td className="py-2 px-2">{v.user?.fullName}</td>
             <td className="py-2 px-2">{v.status}</td>
             <td className="py-2 px-2">{v.appliedAt}</td>
             {common}

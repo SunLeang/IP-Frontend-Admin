@@ -64,6 +64,22 @@ export async function createEvent(data: CreateEventPayload) {
   }
 }
 
+export async function getEventsById(
+  eventId: string
+): Promise<{ data: string }> {
+  try {
+    const response = await API.get(`/events/${eventId}`);
+    const rawData = response.data;
+
+    console.log("rwa:  " + JSON.stringify(rawData.name));
+
+    return { data: rawData.name };
+  } catch (error) {
+    console.error("Failed to fetch events:", error);
+    throw error;
+  }
+}
+
 export async function getEvents(): Promise<{ data: EventProps[] }> {
   try {
     const response = await API.get("/events");

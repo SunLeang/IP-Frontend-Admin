@@ -6,11 +6,15 @@ import { useParams } from "next/navigation";
 
 import SwitchPage from "@/components/switch-pages";
 
-import { getVolunteers } from "@/app/(api)/volunteers_api";
+import {
+  getVolunteers,
+  getVolunteersByEventId,
+} from "@/app/(api)/volunteers_api";
 import { getTasksByEventId } from "@/app/(api)/tasks_api";
 import ErrorMessage from "../(components)/ErrorMessage";
 import Loading from "../(components)/Loading";
 import DataTable from "../(components)/DataTable";
+import { getEventsById } from "@/app/(api)/events_api";
 
 export default function Page() {
   const [view, setView] = useState<"volunteers" | "tasks">("volunteers");
@@ -24,10 +28,16 @@ export default function Page() {
     isLoading: loadingVolunteers,
     isError: errorVolunteers,
   } = useQuery({
-    queryKey: ["volunteers"],
-    queryFn: getVolunteers,
+    queryKey: ["volunteers", eventId],
+    queryFn: () => getVolunteersByEventId(eventId),
     select: (res) => res.data,
     enabled: view === "volunteers",
+  });
+
+  const { data: event } = useQuery({
+    queryKey: ["event", eventId],
+    queryFn: () => getEventsById(eventId),
+    select: (res) => res.data,
   });
 
   const {
@@ -61,6 +71,7 @@ export default function Page() {
           filterStatus="Attending"
           showStatusToggle={true}
           showOpenTaskSidebar={true}
+          eventName={event}
         />
       );
     }
