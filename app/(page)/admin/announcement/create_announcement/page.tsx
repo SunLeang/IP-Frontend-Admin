@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CloudUpload } from "lucide-react";
 import { createAnnouncement } from "@/app/(api)/announcements_api";
-import { getEvents } from "@/app/(api)/events_api";
+import { getEventsByOrganizerId } from "@/app/(api)/events_api";
 import { EventProps } from "@/app/(api)/events_api";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -57,16 +57,33 @@ export default function CreateAnnouncement() {
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const { data } = await getEvents();
+        // Changed to use getEventsByOrganizerId instead of getEvents
+        const { data } = await getEventsByOrganizerId();
         setEvents(data);
+
+        if (data.length === 0) {
+          console.warn("No events found for this admin");
+        }
       } catch (err) {
-        console.error("Failed to load events", err);
+        console.error("Failed to load admin's events", err);
+        alert("Failed to load your events. Please try again.");
       } finally {
         setLoading(false);
       }
     };
     loadEvents();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading your events...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -85,73 +102,111 @@ export default function CreateAnnouncement() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-2xl space-y-6">
           {/* Event selection */}
-          <select
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-            value={announcement.event}
-            onChange={(e) =>
-              setAnnouncement({ ...announcement, event: e.target.value })
-            }
-          >
-            <option value="">Select an Event</option>
-            {events.map((event) => (
-              <option key={event.id} value={event.id}>
-                {event.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Title */}
-          <input
-            type="text"
-            placeholder="Title"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-            value={announcement.title}
-            onChange={(e) =>
-              setAnnouncement({ ...announcement, title: e.target.value })
-            }
-          />
-
-          {/* Image upload */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center bg-gray-50">
-            <CloudUpload className="mx-auto mb-4 w-10 h-10 text-gray-500" />
-            <p className="mb-2">Drag and drop or select a file</p>
-            <button
-              className="px-4 py-2 border rounded-md"
-              onClick={() =>
-                setAnnouncement({
-                  ...announcement,
-                  image: "songkran.png",
-                })
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select an Event *
+            </label>
+            <select
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={announcement.event}
+              onChange={(e) =>
+                setAnnouncement({ ...announcement, event: e.target.value })
               }
             >
-              Upload Image
-            </button>
+              <option value="">
+                {events.length === 0
+                  ? "No events available"
+                  : "Select an Event"}
+              </option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name} ({event.status})
+                </option>
+              ))}
+            </select>
+            {events.length === 0 && (
+              <p className="text-sm text-gray-500 mt-1">
+                You need to create an event first before making announcements.
+              </p>
+            )}
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title *
+            </label>
+            <input
+              type="text"
+              placeholder="Enter announcement title"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={announcement.title}
+              onChange={(e) =>
+                setAnnouncement({ ...announcement, title: e.target.value })
+              }
+            />
+          </div>
+
+          {/* Image upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image (Optional)
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center bg-gray-50">
+              <CloudUpload className="mx-auto mb-4 w-10 h-10 text-gray-500" />
+              <p className="mb-2">Drag and drop or select a file</p>
+              <button
+                type="button"
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                onClick={() =>
+                  setAnnouncement({
+                    ...announcement,
+                    image: "songkran.png",
+                  })
+                }
+              >
+                Upload Image
+              </button>
+              {announcement.image && (
+                <p className="text-sm text-green-600 mt-2">
+                  Image selected: {announcement.image}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Description */}
-          <textarea
-            placeholder="Describe the announcement..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-            rows={6}
-            value={announcement.description}
-            onChange={(e) =>
-              setAnnouncement({ ...announcement, description: e.target.value })
-            }
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description *
+            </label>
+            <textarea
+              placeholder="Describe the announcement..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={6}
+              value={announcement.description}
+              onChange={(e) =>
+                setAnnouncement({
+                  ...announcement,
+                  description: e.target.value,
+                })
+              }
+            />
+          </div>
         </div>
       </div>
 
       <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
         <button
           onClick={() => router.back()}
-          className="px-6 py-2 bg-white border border-gray-300 rounded-md"
+          className="px-6 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
         >
           Cancel
         </button>
         <button
           onClick={handlePublish}
-          disabled={isSubmitting}
-          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          disabled={isSubmitting || events.length === 0}
+          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting ? "Publishing..." : "Publish"}
         </button>

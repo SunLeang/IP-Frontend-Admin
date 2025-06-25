@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 import {
-  getAnnouncementsByEventId,
+  getAllAnnouncements,
   deleteAnnouncement,
 } from "@/app/(api)/announcements_api";
 import AnnouncementList from "./(components)/AnnouncementList";
@@ -18,14 +18,16 @@ export default function AnnouncementPage() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["announcements"],
-    queryFn: () => getAnnouncementsByEventId(),
+    queryKey: ["announcements", "super-admin"],
+    queryFn: getAllAnnouncements,
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAnnouncement(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      queryClient.invalidateQueries({
+        queryKey: ["announcements", "super-admin"],
+      });
     },
     onError: (error) => {
       console.error("Failed to delete announcement:", error);
@@ -39,16 +41,46 @@ export default function AnnouncementPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen">
+        <div className="flex-1 overflow-auto bg-gray-100 w-full">
+          <div className="p-6">
+            <div className="text-center py-12">
+              <p>Loading all announcements...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-screen">
+        <div className="flex-1 overflow-auto bg-gray-100 w-full">
+          <div className="p-6">
+            <div className="text-center py-12">
+              <p className="text-red-500">
+                Failed to load announcements. Please try again.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen">
       <div className="flex-1 overflow-auto bg-gray-100 w-full">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold text-gray-900">
-              Announcement
+              All Announcements
             </h1>
             <Link
-              href="/admin/announcement/create_announcement"
+              href="/superAdmin/announcement/create_announcement"
               className="px-6 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 text-sm font-semibold"
             >
               Create Announcement
@@ -64,10 +96,10 @@ export default function AnnouncementPage() {
                 No announcements yet
               </h3>
               <p className="text-gray-600 mb-4">
-                Create your first announcement to get started.
+                Create the first announcement to get started.
               </p>
               <Link
-                href="/admin/announcement/create_announcement"
+                href="/superAdmin/announcement/create_announcement"
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Create Announcement

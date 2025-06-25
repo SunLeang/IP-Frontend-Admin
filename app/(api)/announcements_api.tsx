@@ -30,7 +30,7 @@ export interface UpdateAnnouncementPayload {
   image: string;
 }
 
-//  Remove hardcoded eventId and make it dynamic
+// ✅ Remove hardcoded eventId and make it dynamic
 export async function getAnnouncementsByEventId(
   eventId: string
 ): Promise<AnnouncementProps[]> {
@@ -49,7 +49,7 @@ export async function getAnnouncementsByEventId(
   }
 }
 
-//  Get all announcements for admin's events
+// ✅ Get all announcements for admin's events
 export async function getAnnouncementsForAdminEvents(): Promise<
   AnnouncementProps[]
 > {
@@ -65,9 +65,8 @@ export async function getAnnouncementsForAdminEvents(): Promise<
     }
 
     // Get announcements for all admin's events
-    const announcementsPromises = adminEvents.map(
-      (event: any) =>
-        API.get(`/announcements/event/${event.id}`).catch(() => ({ data: [] })) // ✅ Fixed: return object with data property
+    const announcementsPromises = adminEvents.map((event: any) =>
+      API.get(`/announcements/event/${event.id}`).catch(() => ({ data: [] }))
     );
 
     const announcementsResponses = await Promise.all(announcementsPromises);
@@ -99,6 +98,100 @@ export async function getAnnouncementsForAdminEvents(): Promise<
   } catch (error) {
     console.error("Failed to fetch admin's announcements:", error);
     return [];
+  }
+}
+
+//  Get ALL announcements (for super admin)
+export async function getAllAnnouncements(): Promise<AnnouncementProps[]> {
+  try {
+    // Get all events first
+    const eventsResponse = await API.get("/events");
+
+    // Handle different response structures
+    let allEvents;
+    if (eventsResponse.data?.data) {
+      // If response has nested data property
+      allEvents = eventsResponse.data.data;
+    } else if (Array.isArray(eventsResponse.data)) {
+      // If response.data is directly an array
+      allEvents = eventsResponse.data;
+    } else if (eventsResponse.data?.events) {
+      // If response has events property
+      allEvents = eventsResponse.data.events;
+    } else {
+      console.warn(
+        "Unexpected events response structure:",
+        eventsResponse.data
+      );
+      return [];
+    }
+
+    // Ensure allEvents is an array
+    if (!Array.isArray(allEvents)) {
+      console.error("Events data is not an array:", allEvents);
+      return [];
+    }
+
+    if (allEvents.length === 0) {
+      console.log("No events found");
+      return [];
+    }
+
+    console.log(`Found ${allEvents.length} events, fetching announcements...`);
+
+    // Get announcements for each event (sequential to avoid overwhelming server)
+    const allAnnouncements: AnnouncementProps[] = [];
+
+    for (const event of allEvents) {
+      try {
+        const announcementsResponse = await API.get(
+          `/announcements/event/${event.id}`
+        );
+
+        // Handle announcements response structure
+        let eventAnnouncements;
+        if (Array.isArray(announcementsResponse.data)) {
+          eventAnnouncements = announcementsResponse.data;
+        } else if (announcementsResponse.data?.data) {
+          eventAnnouncements = announcementsResponse.data.data;
+        } else {
+          eventAnnouncements = [];
+        }
+
+        eventAnnouncements.forEach((announcement: any) => {
+          allAnnouncements.push({
+            ...announcement,
+            date: formatDateTime(announcement.createdAt),
+            event: {
+              id: event.id,
+              name: event.name,
+              organizerId: event.organizerId,
+            },
+          });
+        });
+      } catch (eventError) {
+        // Continue to next event if this one fails
+        console.warn(
+          `Failed to get announcements for event ${event.name || event.id}:`,
+          eventError
+        );
+        continue;
+      }
+    }
+
+    console.log(`Found ${allAnnouncements.length} total announcements`);
+    return allAnnouncements;
+  } catch (error) {
+    console.error("Failed to fetch all announcements:", error);
+
+    // Fallback: Try to get announcements for admin events only
+    try {
+      console.log("Falling back to admin events...");
+      return await getAnnouncementsForAdminEvents();
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError);
+      return [];
+    }
   }
 }
 
