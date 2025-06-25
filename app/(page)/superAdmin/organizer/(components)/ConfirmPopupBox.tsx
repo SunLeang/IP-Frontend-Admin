@@ -1,3 +1,5 @@
+import { useAuth } from "@/app/hooks/AuthContext";
+
 interface ConfirmPopupProps {
   position: { x: number; y: number };
   onDelete: () => void;
@@ -6,6 +8,7 @@ interface ConfirmPopupProps {
   onEdit?: () => void;
   onCreate?: () => void;
   enableCreate?: boolean;
+  targetUser?: any;
 }
 
 export default function ConfirmPopupBox({
@@ -16,7 +19,11 @@ export default function ConfirmPopupBox({
   onEdit,
   onCreate,
   enableCreate = false,
+  targetUser,
 }: ConfirmPopupProps) {
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.systemRole === "SUPER_ADMIN";
+
   return (
     <div
       role="dialog"
@@ -35,6 +42,7 @@ export default function ConfirmPopupBox({
           Edit
         </button>
       )}
+
       {enableCreate && onCreate && (
         <button
           type="button"
@@ -44,22 +52,32 @@ export default function ConfirmPopupBox({
           Create New
         </button>
       )}
-      {onChangeRole && (
+
+      {/* role change - only for Super Admin */}
+      {isSuperAdmin && onChangeRole && (
         <button
           type="button"
           className="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left text-yellow-600"
           onClick={onChangeRole}
         >
-          Change Role
+          Change Roles
         </button>
       )}
-      <button
-        type="button"
-        className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
-        onClick={onDelete}
-      >
-        Delete
-      </button>
+
+      {/* Prevent Super Admin from deleting themselves */}
+      {!(
+        targetUser?.id === currentUser?.id &&
+        targetUser?.systemRole === "SUPER_ADMIN"
+      ) && (
+        <button
+          type="button"
+          className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+          onClick={onDelete}
+        >
+          Delete
+        </button>
+      )}
+
       <button
         type="button"
         className="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"

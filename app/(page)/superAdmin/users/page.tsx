@@ -1,19 +1,15 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import {
-  getUsers,
-  getUsersAttendees,
-  getUsersOrganizers,
-  UserProps,
-} from "@/app/(api)/user_api";
+import { getUsersAttendees, UserProps } from "@/app/(api)/user_api";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "../events/(components)/Loading";
 import ErrorMessage from "../events/(components)/ErrorMessage";
-import Table from "../../../../components/user_table";
+import Table from "@/components/user_table";
 
 export default function Page() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["attendees"],
     queryFn: () => getUsersAttendees(),
     select: (res) => res.data,
   });
@@ -43,7 +39,10 @@ export default function Page() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Users</h1>
+      <h1 className="text-xl font-bold mb-4">Regular Users</h1>
+      <p className="text-gray-600 mb-6">
+        Manage regular users (attendees and volunteers) and their roles.
+      </p>
       <Table
         rows={users}
         onDelete={handleDelete}

@@ -7,6 +7,7 @@ import ConfirmPopupBox from "../app/(page)/superAdmin/organizer/(components)/Con
 import { changeUserRole, deleteUser, UserProps } from "@/app/(api)/user_api";
 import { getEventCountByOrganizerId } from "@/app/(api)/events_api";
 import UserSidebar from "../app/(page)/superAdmin/organizer/(components)/UserSidebar";
+import { useAuth } from "@/app/hooks/AuthContext";
 
 interface UserTableProps {
   rows: UserProps[];
@@ -21,9 +22,13 @@ export default function UserTable({
   rows,
   onDelete,
   onRoleChange,
+  onSave,
   onCreate,
   enableCreate = false,
 }: UserTableProps) {
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.systemRole === "SUPER_ADMIN";
+
   const [search, setSearch] = useState("");
   const [popupPosition, setPopupPosition] = useState<{
     x: number;
@@ -49,11 +54,20 @@ export default function UserTable({
 
   const handleDelete = async (row: UserProps) => {
     try {
+      // Prevent Super Admin from deleting themselves
+      if (row.id === currentUser?.id && row.systemRole === "SUPER_ADMIN") {
+        alert("You cannot delete your own Super Admin account.");
+        setPopupPosition(null);
+        return;
+      }
+
       await deleteUser(row.id);
       onDelete?.(row);
+      alert(`User ${row.fullName} deleted successfully.`);
       setPopupPosition(null);
     } catch (err) {
       console.error("Failed to delete user:", err);
+      alert("Failed to delete user. Please try again.");
     }
   };
 
@@ -75,12 +89,22 @@ export default function UserTable({
     setPopupPosition(null);
   };
 
+  const handleChangeRole = () => {
+    if (selectedRow) {
+      setEditingUser(selectedRow);
+      setShowSidebar(true);
+      setPopupPosition(null);
+    }
+  };
+
   const handleSaveUser = (savedUser: UserProps) => {
-    const exists = rows.find((u) => u.id === savedUser.id);
-    if (exists) {
-      onRoleChange?.(savedUser);
+    if (onSave) {
+      onSave(savedUser);
     } else {
-      onDelete?.(savedUser);
+      const exists = rows.find((u) => u.id === savedUser.id);
+      if (exists) {
+        onRoleChange?.(savedUser);
+      }
     }
     setShowSidebar(false);
   };
@@ -90,13 +114,24 @@ export default function UserTable({
       const counts: Record<string, number> = {};
       await Promise.all(
         rows.map(async (user) => {
-          const count = await getEventCountByOrganizerId(user.id);
-          counts[user.id] = count;
+          try {
+            const count = await getEventCountByOrganizerId(user.id);
+            counts[user.id] = count;
+          } catch (error) {
+            console.warn(
+              `Failed to get event count for user ${user.id}:`,
+              error
+            );
+            counts[user.id] = 0;
+          }
         })
       );
       setEventCounts(counts);
     }
-    fetchEventCounts();
+
+    if (rows.length > 0) {
+      fetchEventCounts();
+    }
   }, [rows]);
 
   useEffect(() => {
@@ -104,6 +139,46 @@ export default function UserTable({
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
   }, []);
+
+  // role display function with null checks
+  const getRoleDisplay = (systemRole?: string, currentRole?: string) => {
+    // Default values if undefined
+    const safeSystemRole = systemRole || "USER";
+    const safeCurrentRole = currentRole || "ATTENDEE";
+
+    const systemRoleColors = {
+      USER: "bg-blue-100 text-blue-800",
+      ADMIN: "bg-green-100 text-green-800",
+      SUPER_ADMIN: "bg-purple-100 text-purple-800",
+    };
+
+    const currentRoleColors = {
+      ATTENDEE: "bg-gray-100 text-gray-800",
+      VOLUNTEER: "bg-orange-100 text-orange-800",
+    };
+
+    return (
+      <div className="flex flex-col gap-1">
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            systemRoleColors[safeSystemRole as keyof typeof systemRoleColors] ||
+            "bg-gray-100 text-gray-800"
+          }`}
+        >
+          {safeSystemRole.replace("_", " ")}
+        </span>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            currentRoleColors[
+              safeCurrentRole as keyof typeof currentRoleColors
+            ] || "bg-gray-100 text-gray-800"
+          }`}
+        >
+          {safeCurrentRole}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -118,35 +193,93 @@ export default function UserTable({
         />
       </div>
 
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="border-b bg-gray-200 text-black">
-            <th className="py-2 px-2">No.</th>
-            <th className="py-2 px-2">ID</th>
-            <th className="py-2 px-2">Name</th>
-            <th className="py-2 px-2">Events</th>
-            <th className="py-2 px-2">Current Role</th>
-            <th className="py-2 px-2"> </th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.map((user, index) => (
-            <tr key={user.id} className="border-b hover:bg-muted/30">
-              <td className="py-2 px-2">{index + 1}</td>
-              <td className="py-2 px-2">{user.id}</td>
-              <td className="py-2 px-2">{user.fullName}</td>
-              <td className="py-2 px-2">{eventCounts[user.id] ?? 0}</td>
-              <td className="py-2 px-2">{user.currentRole}</td>
-              <td className="py-2 px-2 text-center flex items-center justify-center">
-                <MoreVertical
-                  className="w-4 h-4 cursor-pointer"
-                  onClick={(ev) => handlePopupClick(ev, user)}
-                />
-              </td>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-300">
+          <thead>
+            <tr className="bg-gray-50">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Username
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Roles
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Organization
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Events
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredRows.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 h-10 w-10">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          {user.fullName?.charAt(0)?.toUpperCase() || "?"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {user.fullName || "Unknown User"}
+                      </div>
+                      {user.age && (
+                        <div className="text-sm text-gray-500">
+                          Age: {user.age}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {user.email || "N/A"}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {user.username || "N/A"}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {getRoleDisplay(user.systemRole, user.currentRole)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {user.org || "N/A"}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {eventCounts[user.id] || 0}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={(e) => handlePopupClick(e, user)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <MoreVertical className="h-5 w-5" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {popupPosition && selectedRow && (
         <ConfirmPopupBox
@@ -156,6 +289,8 @@ export default function UserTable({
           onCreate={handleCreate}
           onCancel={() => setPopupPosition(null)}
           enableCreate={enableCreate}
+          onChangeRole={isSuperAdmin ? handleChangeRole : undefined}
+          targetUser={selectedRow}
         />
       )}
 
@@ -168,7 +303,4 @@ export default function UserTable({
       )}
     </div>
   );
-}
-function onSave(savedUser: UserProps) {
-  throw new Error("Function not implemented.");
 }
