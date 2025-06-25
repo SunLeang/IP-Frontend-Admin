@@ -2,7 +2,7 @@
 
 import AdminProvider from "@/app/hooks/AdminContext";
 import AuthGuard from "@/app/hooks/AuthGuard";
-import Header from "@/components/header";
+import Header from "@/components/Header";
 import Sidebar from "@/components/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 

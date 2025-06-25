@@ -1,215 +1,182 @@
 import { formatDateTime } from "@/components/formatDateTime";
 import API from "../utils/AxiosInstance";
-import axios from "axios";
-import { getEventsByOrganizerId } from "./events_api";
 
 export interface VolunteerProps {
   id: string;
-  name: string;
-  whyVolunteer: string;
-  cvPath: string;
-  status: string;
-  appliedAt: string;
-  processedAt: string | null;
-  userId: string;
   eventId: string;
-  event: {
-    id: string;
-    name: string;
-    dateTime: string;
-    status: string;
-  };
-  user?: {
+  userId: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  appliedAt: string;
+  approvedAt?: string;
+  whyVolunteer: string;
+  cvPath?: string;
+  user: {
     id: string;
     fullName: string;
     email: string;
-    gender: string;
-    age: number;
-    org: string;
+    gender?: string;
+    age?: number;
+    org?: string;
+  };
+  event: {
+    id: string;
+    name: string;
+    organizerId: string;
   };
 }
 
-interface CreateVolunteerPayload {
+export interface CreateVolunteerEventPayload {
+  eventId: string;
   whyVolunteer: string;
   cvPath: string;
 }
 
-export async function getVolunteers() {
+// Get volunteers for admin's events only
+export async function getVolunteers(): Promise<{ data: VolunteerProps[] }> {
   try {
-    const response = await API.get("/volunteer/my-applications");
-    const rawData = response.data;
+    // Get admin's events first
+    const eventsResponse = await API.get(
+      "/events/organizer/" + localStorage.getItem("userId")
+    );
+    const adminEvents = eventsResponse.data;
 
-    const data: VolunteerProps[] = rawData.map((item: any) => ({
-      id: item.id,
-      name: "volunteer",
-      whyVolunteer: item.whyVolunteer,
-      cvPath: item.cvPath,
-      status: item.status,
-      appliedAt: formatDateTime(item.appliedAt),
-      processedAt: formatDateTime(item.processedAt),
-      userId: item.userId,
-      eventId: item.eventId,
-      event: {
-        id: item.event.id,
-        name: item.event.name,
-        dateTime: formatDateTime(item.event.dateTime),
-        status: item.event.status,
-      },
-    }));
+    if (!adminEvents || adminEvents.length === 0) {
+      return { data: [] };
+    }
 
-    console.log("volunteers:", data);
+    // Get volunteers for all admin's events
+    const volunteersPromises = adminEvents.map((event: any) =>
+      API.get(`/events/${event.id}/volunteers`).catch(() => ({ data: [] }))
+    );
 
-    return { data };
+    const volunteersResponses = await Promise.all(volunteersPromises);
+
+    // Combine all volunteers from all admin's events
+    const allVolunteers: VolunteerProps[] = [];
+
+    volunteersResponses.forEach((response, index) => {
+      const eventVolunteers = response.data || [];
+      const eventInfo = adminEvents[index];
+
+      eventVolunteers.forEach((volunteer: any) => {
+        allVolunteers.push({
+          id: volunteer.id,
+          eventId: volunteer.eventId || eventInfo.id,
+          userId: volunteer.userId,
+          status: volunteer.status,
+          appliedAt: new Date(
+            volunteer.appliedAt || volunteer.createdAt
+          ).toLocaleDateString(),
+          approvedAt: volunteer.approvedAt,
+          whyVolunteer: volunteer.whyVolunteer || "",
+          cvPath: volunteer.cvPath,
+          user: volunteer.user,
+          event: {
+            id: eventInfo.id,
+            name: eventInfo.name,
+            organizerId: eventInfo.organizerId,
+          },
+        });
+      });
+    });
+
+    return { data: allVolunteers };
   } catch (error) {
-    console.error("Error fetching volunteers:", error);
+    console.error("Failed to fetch admin's volunteers:", error);
     return { data: [] };
   }
 }
 
-export async function createVolunteerEvent(data: CreateVolunteerPayload) {
-  // console.log("createVolunteerEvent Data:", data);
+//  Get volunteers for a specific event
+export async function getVolunteersByEventId(
+  eventId: string
+): Promise<{ data: VolunteerProps[] }> {
   try {
-    const response = await API.post("/volunteer/applications", data);
-    return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.status === 409) {
-      console.log("Conflict: Volunteer application already exists.");
-    } else if (error.response && error.response.status === 403) {
-      console.error(
-        "Only users with ATTENDEE role can apply for volunteer positions.",
-        error
-      );
-    } else {
-      console.error("Failed to create volunteer event:", error);
-    }
+    const response = await API.get(`/events/${eventId}/volunteers`);
+    const volunteers = response.data || [];
+
+    const transformedVolunteers: VolunteerProps[] = volunteers.map(
+      (volunteer: any) => ({
+        id: volunteer.id,
+        eventId: volunteer.eventId || eventId,
+        userId: volunteer.userId,
+        status: volunteer.status,
+        appliedAt: new Date(
+          volunteer.appliedAt || volunteer.createdAt
+        ).toLocaleDateString(),
+        approvedAt: volunteer.approvedAt,
+        whyVolunteer: volunteer.whyVolunteer || "",
+        cvPath: volunteer.cvPath,
+        user: volunteer.user,
+        event: volunteer.event || { id: eventId, name: "", organizerId: "" },
+      })
+    );
+
+    return { data: transformedVolunteers };
+  } catch (error) {
+    console.error(`Failed to fetch volunteers for event ${eventId}:`, error);
+    return { data: [] };
+  }
+}
+
+//  Get a single volunteer by ID
+export async function getVolunteersById(
+  volunteerId: string
+): Promise<{ data: VolunteerProps }> {
+  try {
+    const response = await API.get(`/volunteer/applications/${volunteerId}`);
+    const volunteer = response.data;
+
+    const transformedVolunteer: VolunteerProps = {
+      id: volunteer.id,
+      eventId: volunteer.eventId,
+      userId: volunteer.userId,
+      status: volunteer.status,
+      appliedAt: new Date(
+        volunteer.appliedAt || volunteer.createdAt
+      ).toLocaleDateString(),
+      approvedAt: volunteer.approvedAt,
+      whyVolunteer: volunteer.whyVolunteer || "",
+      cvPath: volunteer.cvPath,
+      user: volunteer.user,
+      event: volunteer.event,
+    };
+
+    return { data: transformedVolunteer };
+  } catch (error) {
+    console.error(`Failed to fetch volunteer ${volunteerId}:`, error);
     throw error;
   }
 }
 
-export async function deleteEventVolunteer(
-  eventId: string,
-  volunteerId: string
-) {
+//  Update volunteer status (approve/reject)
+export async function updateVolunteerStatus(
+  volunteerId: string,
+  status: "APPROVED" | "REJECTED"
+): Promise<VolunteerProps> {
   try {
-    const response = await API.delete(
-      `/volunteer/event/${eventId}/volunteers/&${volunteerId}`
+    const response = await API.patch(
+      `/volunteer/applications/${volunteerId}/status`,
+      {
+        status,
+      }
     );
-    window.location.reload();
-    return response;
+
+    console.log(`Volunteer ${volunteerId} status updated to ${status}`);
+    return response.data;
   } catch (error) {
-    console.error("Failed to delete event:", error);
-  } finally {
-    alert(`event: ${eventId} is deleted!`);
+    console.error(`Failed to update volunteer status:`, error);
+    throw error;
   }
 }
 
-export async function getVolunteersByEventId(eventId: string) {
+export async function createVolunteerEvent(data: CreateVolunteerEventPayload) {
   try {
-    console.log("eventID Inside API: " + eventId);
-
-    const response = await API.get(`/volunteer/event/${eventId}/applications`);
-    const rawData = response.data;
-
-    console.log("eventI Volenteer API: " + JSON.stringify(rawData));
-
-    const data: VolunteerProps[] = rawData.map((item: any) => ({
-      id: item.id,
-      whyVolunteer: item.whyVolunteer,
-      cvPath: item.cvPath,
-      status: item.status,
-      appliedAt: formatDateTime(item.appliedAt),
-      processedAt: formatDateTime(item.processedAt),
-      userId: item.userId,
-      eventId: item.eventId,
-      event: {
-        id: item.event?.id ?? "",
-        name: item.event?.name ?? "Unnamed Event",
-        dateTime: item.event?.dateTime ?? "",
-        status: item.event?.status ?? "",
-      },
-      user: item.user
-        ? {
-            id: item.user.id,
-            fullName: item.user.fullName,
-            email: item.user.email,
-            gender: item.user.status,
-            age: item.user.age,
-            org: item.user.org,
-          }
-        : undefined,
-    }));
-
-    // console.log("volunteers By EventId:", data);
-
-    return { data };
+    const response = await API.post("/volunteer/applications", data);
+    console.log("Volunteer application created:", response.data);
+    return response.data;
   } catch (error) {
-    console.error("Error fetching volunteers by Event Id:", error);
-    return { data: [] };
-  }
-}
-
-export async function getVolunteersById(id: string) {
-  try {
-    const response = await API.get(
-      `/volunteer/applications/${id.slice(-38, -1).slice(1)}`
-    );
-    const data = response.data;
-    console.log("volunteers By Id:", data);
-
-    return { data };
-  } catch (error) {
-    console.error("Error fetching volunteers by Id:", error);
-    return { data: [] };
-  }
-}
-
-export async function updateVolunteerStatus(id: string, status: string) {
-  try {
-    const response = await API.patch(`/volunteer/applications/${id}/status`, {
-      status: status,
-    });
-    window.location.reload();
-    return response;
-  } catch (error) {
-    console.error("Failed to update volunteer status:", error);
-  } finally {
-    alert(`Volunteer Status is updated!`);
-  }
-}
-
-export async function getAllVolunteersByOrganizer(): Promise<{
-  data: VolunteerProps[];
-}> {
-  try {
-    const { data: events } = await getEventsByOrganizerId();
-    // console.log("getEventsByOrganizerId data: " + JSON.stringify(events));
-
-    const volunteersPerEvent = await Promise.all(
-      events.map((event) => getVolunteersByEventId(event.id))
-    );
-    // console.log(
-    //   "getVolunteersByEventId data: " + JSON.stringify(volunteersPerEvent)
-    // );
-
-    // flatten the nested arrays into one, and add event data
-    const allVolunteers = volunteersPerEvent.flatMap((result, index) => {
-      const event = events[index];
-      return result.data.map((volunteer) => ({
-        ...volunteer,
-        event: {
-          id: event.id,
-          name: event.name,
-          dateTime: `${event.date} ${event.time}`,
-          status: event.status,
-        },
-      }));
-    });
-
-    console.log("All volunteers for my events:", allVolunteers);
-
-    return { data: allVolunteers };
-  } catch (error) {
-    console.error("Failed to fetch all volunteers by organizer:", error);
-    return { data: [] };
+    console.error("Failed to create volunteer application:", error);
+    throw error;
   }
 }

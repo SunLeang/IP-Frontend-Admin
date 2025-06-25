@@ -1,8 +1,6 @@
 "use client";
 import { useAdmin } from "@/app/hooks/AdminContext";
 import {
-  ArrowDownCircle,
-  BellDot,
   ChevronDown,
   Menu,
   PanelLeft,
@@ -11,7 +9,6 @@ import React, { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { getProfile, ProfileProps } from "@/app/(api)/profile_api";
 import NotificationDropdown from "./notification-dropdown";
 

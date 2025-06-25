@@ -12,7 +12,7 @@ import {
 import DataTable from "../events/(components)/DataTable";
 import Loading from "../events/(components)/Loading";
 import ErrorMessage from "../events/(components)/ErrorMessage";
-import { getAllVolunteersByOrganizer } from "@/app/(api)/volunteers_api";
+import { getVolunteers } from "@/app/(api)/volunteers_api"; // ✅ Changed to existing function
 import { useQuery } from "@tanstack/react-query";
 import SwitchPage from "@/components/switch-pages";
 
@@ -26,17 +26,18 @@ export default function Page() {
     isError,
   } = useQuery({
     queryKey: ["volunteers"],
-    queryFn: getAllVolunteersByOrganizer,
+    queryFn: getVolunteers, // ✅ Use existing function
     select: (res) => res.data,
   });
+
   const totalPages = Math.ceil((Volunteers?.length ?? 0) / pageSize);
   const paginatedData = Volunteers?.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  if (isLoading) return <Loading message="Loading tasks..." />;
-  if (isError) return <ErrorMessage message="Failed to load tasks." />;
+  if (isLoading) return <Loading message="Loading volunteers..." />; // ✅ Updated message
+  if (isError) return <ErrorMessage message="Failed to load volunteers." />; // ✅ Updated message
 
   return (
     <>
@@ -46,7 +47,7 @@ export default function Page() {
         <div className="table-box">
           <DataTable
             rows={Volunteers || []}
-            title="My Volunteer"
+            title="My Volunteers" // ✅ Updated title
             dataType="volunteer1"
             showAssignTaskToVolunteer={true}
             showOpenTaskSidebar={true}

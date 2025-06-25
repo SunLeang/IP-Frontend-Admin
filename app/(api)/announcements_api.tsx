@@ -1,6 +1,5 @@
 import { formatDateTime } from "@/components/formatDateTime";
 import API from "../utils/AxiosInstance";
-import { useQueryClient } from "@tanstack/react-query";
 
 export interface AnnouncementProps {
   id: string;
@@ -31,19 +30,76 @@ export interface UpdateAnnouncementPayload {
   image: string;
 }
 
-const eventId = "7dc32f18-71f6-4e7a-be82-eacf86e22e88";
+//  Remove hardcoded eventId and make it dynamic
+export async function getAnnouncementsByEventId(
+  eventId: string
+): Promise<AnnouncementProps[]> {
+  try {
+    const res = await API.get(`/announcements/event/${eventId}`);
 
-export async function getAnnouncementsByEventId(): Promise<
+    const data = res.data.map((item: AnnouncementProps) => ({
+      ...item,
+      date: formatDateTime(item.createdAt),
+    }));
+
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch announcements for event ${eventId}:`, error);
+    return [];
+  }
+}
+
+//  Get all announcements for admin's events
+export async function getAnnouncementsForAdminEvents(): Promise<
   AnnouncementProps[]
 > {
-  const res = await API.get(`/announcements/event/${eventId}`);
+  try {
+    // Get admin's events first
+    const eventsResponse = await API.get(
+      "/events/organizer/" + localStorage.getItem("userId")
+    );
+    const adminEvents = eventsResponse.data;
 
-  const data = res.data.map((item: AnnouncementProps) => ({
-    ...item,
-    date: formatDateTime(item.createdAt),
-  }));
+    if (!adminEvents || adminEvents.length === 0) {
+      return [];
+    }
 
-  return data;
+    // Get announcements for all admin's events
+    const announcementsPromises = adminEvents.map(
+      (event: any) =>
+        API.get(`/announcements/event/${event.id}`).catch(() => ({ data: [] })) // ✅ Fixed: return object with data property
+    );
+
+    const announcementsResponses = await Promise.all(announcementsPromises);
+
+    // Combine all announcements from all admin's events
+    const allAnnouncements: AnnouncementProps[] = [];
+
+    announcementsResponses.forEach((response, index) => {
+      const eventInfo = adminEvents[index];
+
+      const eventAnnouncements = Array.isArray(response)
+        ? response
+        : response.data || [];
+
+      eventAnnouncements.forEach((announcement: any) => {
+        allAnnouncements.push({
+          ...announcement,
+          date: formatDateTime(announcement.createdAt),
+          event: {
+            id: eventInfo.id,
+            name: eventInfo.name,
+            organizerId: eventInfo.organizerId,
+          },
+        });
+      });
+    });
+
+    return allAnnouncements;
+  } catch (error) {
+    console.error("Failed to fetch admin's announcements:", error);
+    return [];
+  }
 }
 
 export async function createAnnouncement(
