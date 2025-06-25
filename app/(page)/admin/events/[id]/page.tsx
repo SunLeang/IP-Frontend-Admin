@@ -23,15 +23,18 @@ export default function Page() {
   const params = useParams();
   const eventId = params.id as string;
 
+  // Use applications endpoint for volunteers
   const {
     data: volunteers,
     isLoading: loadingVolunteers,
     isError: errorVolunteers,
+    refetch: refetchVolunteers,
   } = useQuery({
-    queryKey: ["volunteers", eventId],
+    queryKey: ["volunteer-applications", eventId],
     queryFn: () => getVolunteersByEventId(eventId),
     select: (res) => res.data,
     enabled: view === "volunteers",
+    retry: 2,
   });
 
   const { data: event } = useQuery({
@@ -57,22 +60,51 @@ export default function Page() {
   );
   const totalPages = Math.ceil((tasks?.length ?? 0) / pageSize);
 
+  console.log("🔍 Event detail page data:", {
+    eventId,
+    view,
+    volunteersCount: volunteers?.length,
+    tasksCount: tasks?.length,
+    loadingVolunteers,
+    errorVolunteers,
+  });
+
   const renderView = () => {
     if (view === "volunteers") {
-      if (loadingVolunteers) return <Loading message="Loading volunteers..." />;
+      if (loadingVolunteers)
+        return <Loading message="Loading volunteer applications..." />;
       if (errorVolunteers)
-        return <ErrorMessage message="Failed to load volunteers." />;
+        return (
+          <ErrorMessage message="Failed to load volunteer applications." />
+        );
 
       return (
-        <DataTable
-          rows={volunteers || []}
-          title="Volunteers"
-          dataType="volunteer"
-          filterStatus="Attending"
-          showStatusToggle={true}
-          showOpenTaskSidebar={true}
-          eventName={event}
-        />
+        <div>
+          <div className="mb-4 flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold">Volunteer Applications</h3>
+              <p className="text-sm text-gray-600">
+                Found {volunteers?.length || 0} applications for this event
+              </p>
+            </div>
+            <button
+              onClick={() => refetchVolunteers()}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <DataTable
+            rows={volunteers || []}
+            title="Volunteer Applications"
+            dataType="volunteer"
+            filterStatus="PENDING"
+            showStatusToggle={true}
+            showOpenTaskSidebar={true}
+            eventName={event?.name}
+          />
+        </div>
       );
     }
 
@@ -122,7 +154,7 @@ export default function Page() {
             view === "volunteers" ? "bg-blue-500 text-white" : "bg-gray-200"
           }`}
         >
-          Volunteers
+          Volunteer Applications
         </button>
         <button
           onClick={() => setView("tasks")}

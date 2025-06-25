@@ -1,91 +1,35 @@
 "use client";
 
-import { CalendarDays, Clock, CloudUpload, Pencil } from "lucide-react";
-import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import Header from "../../(components)/Header";
+import React, { useState, useEffect } from "react";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import ImageUpload from "@/components/ImageUpload";
 import { createEvent } from "@/app/(api)/events_api";
-import { EventCategory, getEventCategories } from "@/app/(api)/categories_api";
+import { getEventCategories, EventCategory } from "@/app/(api)/categories_api";
+import { useRouter } from "next/navigation";
 
 export default function CreateEventPage() {
-  const [address, setAddress] = useState("");
+  const router = useRouter();
+
+  // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [toggleDate, setToggleDate] = useState<boolean>(false);
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
   const [categoryId, setCategoryId] = useState("");
   const [acceptingVolunteers, setAcceptingVolunteers] = useState(false);
   const [categories, setCategories] = useState<EventCategory[]>([]);
 
-  const user = "Jeffrey Zin";
+  // Image state
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [locationImage, setLocationImage] = useState<string | null>(null);
 
-  const handlePublish = async () => {
-    if (
-      !title ||
-      !address ||
-      !description ||
-      !selectedDate ||
-      // !file ||
-      !categoryId
-    ) {
-      const missingFields: string[] = [];
+  // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-      if (!title) missingFields.push("Title");
-      if (!address) missingFields.push("Location/Address");
-      if (!description) missingFields.push("Description");
-      if (!selectedDate) missingFields.push("Date and Time");
-      if (!file) missingFields.push("File Upload (Image)");
-      if (!categoryId) missingFields.push("Category");
-
-      if (missingFields.length > 0) {
-        alert(
-          `Please fill out the following field(s):\n- ${missingFields.join(
-            "\n- "
-          )}`
-        );
-        return;
-      }
-
-      return;
-    }
-
-    try {
-      const payload = {
-        name: title,
-        description,
-        dateTime: selectedDate.toISOString(),
-        locationDesc: address,
-        locationImage: file?.name || "",
-        profileImage: file?.name || "",
-        coverImage: file?.name || "",
-        status,
-        categoryId,
-        acceptingVolunteers,
-      };
-
-      const result = await createEvent(payload);
-      alert(`Event "${result.name}" Published Successfully! `);
-      console.log("Created event:", result);
-    } catch (error) {
-      alert("Failed to publish event. Please try again.");
-      console.error(error);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      const previewUrl = URL.createObjectURL(selectedFile);
-      setFilePreview(previewUrl);
-    }
-  };
-
+  // Load categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -93,147 +37,242 @@ export default function CreateEventPage() {
         setCategories(result);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
+        alert("Failed to load categories");
       }
     };
     fetchCategories();
   }, []);
 
+  const handlePublish = async () => {
+    // Validation
+    if (!title || !address || !description || !selectedDate || !categoryId) {
+      const missingFields: string[] = [];
+
+      if (!title) missingFields.push("Title");
+      if (!address) missingFields.push("Location/Address");
+      if (!description) missingFields.push("Description");
+      if (!selectedDate) missingFields.push("Date and Time");
+      if (!categoryId) missingFields.push("Category");
+
+      alert(
+        `Please fill out the following field(s):\n- ${missingFields.join(
+          "\n- "
+        )}`
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        name: title,
+        description,
+        dateTime: selectedDate.toISOString(),
+        locationDesc: address,
+        locationImage: locationImage || "",
+        profileImage: profileImage || "",
+        coverImage: coverImage || "",
+        status,
+        categoryId,
+        acceptingVolunteers,
+      };
+
+      const result = await createEvent(payload);
+      alert(
+        `Event "${result.name}" ${
+          status === "PUBLISHED" ? "Published" : "Saved as Draft"
+        } Successfully!`
+      );
+
+      // Redirect to events list
+      router.push("/admin/events");
+    } catch (error) {
+      console.error("Failed to create event:", error);
+      alert("Failed to create event. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 px-4 py-6 flex flex-col gap-2 mb-40">
-      <Header />
-
-      {/* File Upload */}
-      <div className="w-full max-w-full mb-12 border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-white">
-        <CloudUpload />
-        <p className="font-medium">Choose a file or drag & drop it here</p>
-        <p className="text-gray-400 text-sm">
-          JPEG, PNG, PDF, and MP4 formats, up to 50MB
+    <div className="min-h-screen bg-gray-100 px-4 py-6 flex flex-col gap-6">
+      {/* Header */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h1 className="text-2xl font-bold text-gray-900">Create New Event</h1>
+        <p className="text-gray-600">
+          Fill in the details to create your event
         </p>
-        <input
-          type="file"
-          accept=".jpg,.jpeg,.png,.pdf,.mp4"
-          className="mt-4"
-          onChange={handleFileChange}
-        />
-
-        {filePreview && (
-          <img src={filePreview} alt="Preview" className="mt-4 w-32 rounded" />
-        )}
       </div>
 
-      {/* Title */}
-      <div className="flex justify-between">
-        <div className="flex flex-col mb-4 mx-2 gap-2">
-          <h4 className="text-xl font-semibold">Title</h4>
+      {/* Profile Image Upload */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold mb-4">Profile Image</h2>
+        <ImageUpload
+          value={profileImage}
+          onChange={setProfileImage}
+          folder="events/profiles"
+          placeholder="Upload event profile image"
+        />
+      </div>
+
+      {/* Cover Image Upload */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold mb-4">Cover Image</h2>
+        <ImageUpload
+          value={coverImage}
+          onChange={setCoverImage}
+          folder="events/covers"
+          placeholder="Upload event cover image"
+        />
+      </div>
+
+      {/* Location Image Upload */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold mb-4">Location Image</h2>
+        <ImageUpload
+          value={locationImage}
+          onChange={setLocationImage}
+          folder="events/locations"
+          placeholder="Upload location image"
+        />
+      </div>
+
+      {/* Event Details */}
+      <div className="bg-white p-6 rounded-lg shadow space-y-6">
+        <h2 className="text-lg font-semibold">Event Details</h2>
+
+        {/* Title */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Title *
+          </label>
           <input
             type="text"
-            placeholder="Input Title"
-            className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-md"
+            placeholder="Enter event title"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
-        <button className="h-10 w-10 flex justify-center items-center bg-black border border-gray-800 rounded-full">
-          <Pencil color="white" />
-        </button>
-      </div>
 
-      {/* Status Dropdown */}
-      <div className="flex flex-col ml-2 max-w-xs">
-        <label className="text-xl font-semibold mb-2">Event Status</label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "DRAFT" | "PUBLISHED")}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-400"
-        >
-          <option value="DRAFT">Draft</option>
-          <option value="PUBLISHED">Published</option>
-        </select>
-      </div>
-
-      {/* Select Category */}
-      <div className="flex flex-col ml-2 max-w-xs">
-        <label className="text-xl font-semibold mb-2">Category</label>
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-400"
-        >
-          <option value="">Select a category</option>
-          {categories && categories.length > 0 ? (
-            categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))
-          ) : (
-            <option disabled>Loading categories...</option>
-          )}
-        </select>
-      </div>
-
-      {/* Date and Time */}
-      <div className="flex flex-col gap-4 ml-2 my-4">
-        <p className="text-xl font-semibold">Date and Time</p>
-        <div className="flex items-center gap-3">
-          <CalendarDays />
-          <button
-            className="text-sm text-blue-600 underline"
-            onClick={() => setToggleDate(!toggleDate)}
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Category *
+          </label>
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            {selectedDate
-              ? selectedDate.toLocaleString()
-              : "Choose Date & Time"}
-          </button>
+            <option value="">Select a category</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
-        {toggleDate && (
-          <DatePicker
-            selected={selectedDate}
-            onChange={(date) => setSelectedDate(date || null)}
-            showTimeSelect
-            dateFormat="dd/MM/yyyy h:mm aa"
-            className="border rounded-md p-2"
-            timeIntervals={15}
+
+        {/* Status */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Status
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as "DRAFT" | "PUBLISHED")}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+          </select>
+        </div>
+
+        {/* Date and Time */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Date and Time *
+          </label>
+          <input
+            type="datetime-local"
+            value={selectedDate?.toISOString().slice(0, 16)}
+            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-        )}
-        <div className="ml-4 text-[#7769F7]">+ Add to Calendar</div>
-      </div>
+        </div>
 
-      {/* Location */}
-      <div className="flex flex-col ml-2 mb-6">
-        <p className="text-xl font-semibold mb-2">Location</p>
-        <input
-          type="text"
-          placeholder="Input Address"
-          className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-md"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
-      </div>
+        {/* Location */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Location *
+          </label>
+          <input
+            type="text"
+            placeholder="Enter event location"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </div>
 
-      {/* Description */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xl font-semibold">Event Description</p>
-        <textarea
-          rows={6}
-          placeholder="Describe your event..."
-          className="w-full max-w-4xl px-4 py-3 border border-gray-300 rounded-md mb-6"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
+        {/* Accepting Volunteers */}
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="acceptingVolunteers"
+            checked={acceptingVolunteers}
+            onChange={(e) => setAcceptingVolunteers(e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label
+            htmlFor="acceptingVolunteers"
+            className="text-sm font-medium text-gray-700"
+          >
+            Accept volunteer applications
+          </label>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Description *
+          </label>
+          <textarea
+            rows={6}
+            placeholder="Describe your event..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 justify-end">
-        <button className="px-6 py-1 rounded-xl border bg-white border-gray-400 text-black hover:bg-gray-100">
-          Cancel
-        </button>
-        <button
-          onClick={handlePublish}
-          className="px-6 py-1 rounded-xl bg-green-500 text-white hover:bg-green-600"
-        >
-          Publish Event
-        </button>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex gap-4 justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handlePublish}
+            disabled={isSubmitting}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isSubmitting
+              ? "Creating..."
+              : status === "PUBLISHED"
+              ? "Publish Event"
+              : "Save as Draft"}
+          </Button>
+        </div>
       </div>
     </div>
   );

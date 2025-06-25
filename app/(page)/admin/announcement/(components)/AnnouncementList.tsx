@@ -2,11 +2,12 @@
 import React from "react";
 import { Edit, Trash2 } from "lucide-react";
 import { AnnouncementProps } from "@/app/(api)/announcements_api";
+import { getMinioImageUrl } from "@/app/(api)/file_upload_api";
 
 interface AnnouncementListProps {
   data: AnnouncementProps[];
   onDelete?: (id: string) => void;
-  onEdit?: (id: string) => void; // optional edit support
+  onEdit?: (id: string) => void;
 }
 
 export default function AnnouncementList({
@@ -47,13 +48,12 @@ export default function AnnouncementList({
           <div className="w-full h-40 bg-gray-100">
             <img
               src={
-                announcement.image?.startsWith("http")
-                  ? announcement.image
-                  : `/assets/images/${announcement.image}`
+                getMinioImageUrl(announcement.image) ||
+                "/assets/images/placeholder.png"
               }
               alt={announcement.title}
               onError={(e) => {
-                e.currentTarget.src = "https://via.placeholder.com/300x180";
+                e.currentTarget.src = "/assets/images/placeholder.png";
               }}
               className="w-full h-full object-cover"
             />

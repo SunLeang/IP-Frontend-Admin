@@ -1,5 +1,9 @@
 "use client";
 import { EventProps } from "@/app/(api)/events_api";
+import {
+  getMinioImageUrl,
+  getMinioThumbnailUrl,
+} from "@/app/(api)/file_upload_api";
 import { Star, StarIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -58,12 +62,16 @@ export default function EventCard({
                 {/* Image */}
                 <div className="relative">
                   <div>
-                    <Image
-                      src={`/assets/images/${coverImage}`}
+                    <img
+                      src={
+                        getMinioImageUrl(coverImage) ||
+                        "/assets/images/placeholder.png"
+                      }
                       alt={`${name} img`}
-                      width={400}
-                      height={200}
                       className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/assets/images/placeholder.png";
+                      }}
                     />
                     <div className="absolute bottom-0 bg-orange-300 text-sm text-white px-2 py-1">
                       {category.name}

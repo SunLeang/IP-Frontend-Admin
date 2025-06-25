@@ -2,11 +2,12 @@
 import React from "react";
 import { Edit, Trash2 } from "lucide-react";
 import { AnnouncementProps } from "@/app/(api)/announcements_api";
+import { getMinioImageUrl } from "@/app/(api)/file_upload_api";
 
 interface AnnouncementListProps {
   data: AnnouncementProps[];
   onDelete?: (id: string) => void;
-  onEdit?: (id: string) => void; // optional edit support
+  onEdit?: (id: string) => void;
 }
 
 export default function AnnouncementList({
@@ -14,11 +15,15 @@ export default function AnnouncementList({
   onDelete,
   onEdit,
 }: AnnouncementListProps) {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = "/assets/images/placeholder.png";
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {data?.map((announcement) => (
+      {data?.map((announcement, index) => (
         <div
-          key={announcement.id}
+          key={`announcement-${announcement.id}`}
           className="bg-white border border-gray-200 rounded-xl shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden"
         >
           <div className="p-3 border-b border-gray-100 flex justify-between items-center">
@@ -44,18 +49,17 @@ export default function AnnouncementList({
             </div>
           </div>
 
-          <div className="w-full h-40 bg-gray-100">
+          <div className="w-full h-40 bg-gray-100 relative overflow-hidden">
+            {/* Use regular img tag for MinIO images */}
             <img
               src={
                 announcement.image?.startsWith("http")
                   ? announcement.image
-                  : `/assets/images/${announcement.image}`
+                  : getMinioImageUrl(announcement.image)
               }
               alt={announcement.title}
-              onError={(e) => {
-                e.currentTarget.src = "https://via.placeholder.com/300x180";
-              }}
               className="w-full h-full object-cover"
+              onError={handleImageError}
             />
           </div>
 

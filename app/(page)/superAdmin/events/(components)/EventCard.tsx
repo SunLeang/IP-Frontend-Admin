@@ -1,7 +1,7 @@
 "use client";
 import { EventProps } from "@/app/(api)/events_api";
+import { getMinioImageUrl } from "@/app/(api)/file_upload_api";
 import { Star, StarIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 interface EventCardProps {
@@ -35,6 +35,10 @@ export default function EventCard({
   isExpanded,
   showSeeMoreButton,
 }: EventCardProps) {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = "/assets/images/placeholder.png";
+  };
+
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-14">
@@ -53,20 +57,22 @@ export default function EventCard({
             },
             index
           ) => (
-            <Link key={index} href={`/superAdmin/events/${id}`}>
+            <Link
+              key={`event-${id}-${index}`}
+              href={`/superAdmin/events/${id}`}
+            >
               <div className="bg-white rounded-lg overflow-hidden shadow-md border cursor-pointer hover:shadow-lg transition">
-                {/* Image */}
+                {/* Use regular img tag for MinIO images */}
                 <div className="relative">
                   <div>
-                    <Image
-                      src={`/assets/images/${coverImage}`}
-                      alt={`${name} img`}
-                      width={400}
-                      height={200}
+                    <img
+                      src={getMinioImageUrl(coverImage)}
+                      alt={`${name} cover image`}
                       className="w-full h-48 object-cover"
+                      onError={handleImageError}
                     />
                     <div className="absolute bottom-0 bg-orange-300 text-sm text-white px-2 py-1">
-                      {category.name}
+                      {category?.name || "Uncategorized"}
                     </div>
                   </div>
                   {/* Top-right Save Icon */}
@@ -80,10 +86,10 @@ export default function EventCard({
                   <div className="flex gap-4 items-start h-16">
                     <div className="text-center">
                       {/* month */}
-                      {Array.isArray(date) && date.length === 3 ? (
+                      {Array.isArray(date) && date.length >= 4 ? (
                         <>
                           <div className="text-md font-semibold text-purple-800">
-                            {month[parseInt(date[1], 10) - 1]}
+                            {month[parseInt(date[1], 10) - 1] || "Jan"}
                           </div>
                           <div className="text-xl font-bold">{date[2]}</div>
                         </>
@@ -93,7 +99,7 @@ export default function EventCard({
 
                       <div className="text-xl font-bold">
                         {/* day */}
-                        {date[3]}
+                        {Array.isArray(date) && date.length >= 4 ? date[3] : ""}
                       </div>
                     </div>
                     <div>
@@ -110,8 +116,8 @@ export default function EventCard({
                       <p>{time}</p>
                     </div>
                     <div className="flex gap-2">
-                      <span>$ {price}</span>
-                      <span>💙 {_count.interestedUsers} interested</span>
+                      <span>$ {price || 0}</span>
+                      <span>💙 {_count?.interestedUsers || 0} interested</span>
                     </div>
                   </div>
                 </div>

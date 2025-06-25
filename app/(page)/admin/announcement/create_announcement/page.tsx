@@ -1,26 +1,25 @@
 // app/admin/announcement/create_announcement/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CloudUpload } from "lucide-react";
-import { createAnnouncement } from "@/app/(api)/announcements_api";
-import { getEventsByOrganizerId } from "@/app/(api)/events_api";
-import { EventProps } from "@/app/(api)/events_api";
 import { useQueryClient } from "@tanstack/react-query";
+import ImageUpload from "@/components/ImageUpload";
+import { createAnnouncement } from "@/app/(api)/announcements_api";
+import { getEventsByOrganizerId, EventProps } from "@/app/(api)/events_api";
 
 export default function CreateAnnouncement() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const [announcement, setAnnouncement] = useState({
-    date: new Date().toISOString().slice(0, 10),
     title: "",
     description: "",
-    image: "",
     event: "",
   });
 
+  const [image, setImage] = useState<string | null>(null);
   const [events, setEvents] = useState<EventProps[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,11 +39,13 @@ export default function CreateAnnouncement() {
       const payload = {
         title: announcement.title,
         description: announcement.description,
-        image: announcement.image || "songkran.png",
+        image: image || "default-announcement.png",
         eventId: announcement.event,
       };
+
       await createAnnouncement(payload);
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      alert("Announcement created successfully!");
       router.push("/admin/announcement");
     } catch (error) {
       console.error("Failed to create announcement", error);
@@ -57,7 +58,6 @@ export default function CreateAnnouncement() {
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        // Changed to use getEventsByOrganizerId instead of getEvents
         const { data } = await getEventsByOrganizerId();
         setEvents(data);
 
@@ -95,7 +95,7 @@ export default function CreateAnnouncement() {
           <ArrowLeft />
         </button>
         <h1 className="text-xl font-semibold text-gray-900">
-          Publish Announcement
+          Create Announcement
         </h1>
       </div>
 
@@ -113,20 +113,17 @@ export default function CreateAnnouncement() {
                 setAnnouncement({ ...announcement, event: e.target.value })
               }
             >
-              <option value="">
-                {events.length === 0
-                  ? "No events available"
-                  : "Select an Event"}
-              </option>
+              <option value="">Choose an event</option>
               {events.map((event) => (
                 <option key={event.id} value={event.id}>
-                  {event.name} ({event.status})
+                  {event.name}
                 </option>
               ))}
             </select>
             {events.length === 0 && (
-              <p className="text-sm text-gray-500 mt-1">
-                You need to create an event first before making announcements.
+              <p className="text-sm text-amber-600 mt-2">
+                ⚠️ You need to create at least one event before making
+                announcements.
               </p>
             )}
           </div>
@@ -150,29 +147,15 @@ export default function CreateAnnouncement() {
           {/* Image upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image (Optional)
+              Announcement Image (Optional)
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center bg-gray-50">
-              <CloudUpload className="mx-auto mb-4 w-10 h-10 text-gray-500" />
-              <p className="mb-2">Drag and drop or select a file</p>
-              <button
-                type="button"
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
-                onClick={() =>
-                  setAnnouncement({
-                    ...announcement,
-                    image: "songkran.png",
-                  })
-                }
-              >
-                Upload Image
-              </button>
-              {announcement.image && (
-                <p className="text-sm text-green-600 mt-2">
-                  Image selected: {announcement.image}
-                </p>
-              )}
-            </div>
+            <ImageUpload
+              value={image}
+              onChange={setImage}
+              folder="announcements"
+              placeholder="Upload announcement image"
+              maxSize={5}
+            />
           </div>
 
           {/* Description */}
@@ -200,6 +183,7 @@ export default function CreateAnnouncement() {
         <button
           onClick={() => router.back()}
           className="px-6 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+          disabled={isSubmitting}
         >
           Cancel
         </button>

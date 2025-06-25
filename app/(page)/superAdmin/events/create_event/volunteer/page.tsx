@@ -7,6 +7,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Header from "../../(components)/Header";
 import { createVolunteerEvent } from "@/app/(api)/volunteers_api";
+import ImageUpload from "@/components/ImageUpload";
 
 export default function CreateEventPage() {
   const [title, setTitle] = useState("");
@@ -14,56 +15,48 @@ export default function CreateEventPage() {
   const [volunteerDescription, setVolunteerDescription] = useState("");
   const [requirementDescription, setRequirementDescription] = useState("");
   const [address, setAddress] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [toggleDate, setToggleDate] = useState(false);
   const [eventId, setEventId] = useState("");
 
+  // Use proper CV file management
+  const [cvFile, setCvFile] = useState<string | null>(null);
+  const [additionalImage, setAdditionalImage] = useState<string | null>(null);
+
   const user = "Jeffrey Zin";
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = () => setFilePreview(reader.result as string);
-        reader.readAsDataURL(file);
-      } else {
-        setFilePreview(null);
-      }
-    }
-  };
-
   const handleSubmit = async () => {
-    if (
-      !title
-      // !selectedDate ||
-      // !address
-    ) {
-      alert(`Please fill in the required field: ${title}`);
+    if (!title) {
+      alert(`Please fill in the required field: Title`);
       return;
     } else if (!volunteerDescription) {
-      alert(`Please fill in the required field: ${volunteerDescription}`);
+      alert(`Please fill in the required field: Why Volunteer?`);
       return;
     } else if (!requirementDescription) {
-      alert(`Please fill in the required field: ${requirementDescription}`);
+      alert(`Please fill in the required field: Requirements`);
+      return;
+    } else if (!eventId) {
+      alert(`Please fill in the required field: Event ID`);
       return;
     }
+
     try {
       const payload = {
         eventId,
-        // title,
-        // dateTime: selectedDate.toISOString(),
         whyVolunteer: volunteerDescription,
-        cvPath: "cvPath",
-        // requirement: requirementDescription,
-        // address,
-        // fileName: uploadedFile?.name || "",
+        cvPath: cvFile || "default-cv.pdf",
       };
 
       await createVolunteerEvent(payload);
       alert("Volunteer event published successfully!");
+
+      // Reset form
+      setTitle("");
+      setVolunteerDescription("");
+      setRequirementDescription("");
+      setAddress("");
+      setEventId("");
+      setCvFile(null);
+      setAdditionalImage(null);
     } catch (error: any) {
       if (error.response && error.response.status === 409) {
         alert("Conflict: You have already Volunteered for this Event");
@@ -81,43 +74,41 @@ export default function CreateEventPage() {
     <div className="min-h-screen bg-gray-100 px-4 py-6 flex flex-col gap-6 mb-40">
       <Header />
 
-      {/* File Upload Section */}
-      <div className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center">
-        <CloudUpload />
-        <p className="font-medium mt-2">Choose a file or drag & drop it here</p>
-        <p className="text-gray-400 text-sm mb-4">
-          JPEG, PNG, PDF, and MP4 formats, up to 50MB
-        </p>
-
-        <input
-          type="file"
-          accept="image/*,video/mp4,application/pdf"
-          onChange={handleFileChange}
-          className="hidden"
-          id="fileUpload"
-        />
-        <label
-          htmlFor="fileUpload"
-          className="px-4 py-2 border rounded-lg text-black hover:bg-gray-100 cursor-pointer"
-        >
-          Browse File
-        </label>
-
-        {filePreview && (
-          <img
-            src={filePreview}
-            alt="Preview"
-            className="mt-4 max-h-40 rounded"
+      {/* File Upload Sections */}
+      <div className="space-y-6">
+        {/* CV Upload */}
+        <div>
+          <h3 className="text-lg font-semibold mb-2">CV/Resume Upload</h3>
+          <ImageUpload
+            value={cvFile}
+            onChange={setCvFile}
+            folder="volunteers/cv"
+            maxSize={10}
+            accept=".pdf,.doc,.docx,image/*"
+            placeholder="Upload your CV/Resume (PDF, DOC, or Image)"
+            className="w-full max-w-2xl"
           />
-        )}
-        {uploadedFile && !filePreview && (
-          <p className="text-sm mt-2 text-green-600">{uploadedFile.name}</p>
-        )}
+        </div>
+
+        {/* Additional Supporting Image */}
+        <div>
+          <h3 className="text-lg font-semibold mb-2">
+            Additional Supporting Image (Optional)
+          </h3>
+          <ImageUpload
+            value={additionalImage}
+            onChange={setAdditionalImage}
+            folder="volunteers/images"
+            maxSize={5}
+            placeholder="Upload any additional supporting image"
+            className="w-full max-w-xl"
+          />
+        </div>
       </div>
 
       {/* Event ID Input */}
       <div>
-        <p className="text-xl font-semibold mb-2">Event ID</p>
+        <p className="text-xl font-semibold mb-2">Event ID *</p>
         <input
           type="text"
           placeholder="Enter Event ID"
@@ -129,7 +120,7 @@ export default function CreateEventPage() {
 
       {/* Event Title and Date */}
       <div className="flex flex-col gap-4">
-        <p className="text-xl font-semibold mb-2">Event Title</p>
+        <p className="text-xl font-semibold mb-2">Event Title *</p>
         <input
           type="text"
           placeholder="Event Title"
@@ -166,7 +157,7 @@ export default function CreateEventPage() {
 
       {/* Volunteer Description */}
       <div>
-        <p className="text-xl font-semibold mb-2">Why Volunteer?</p>
+        <p className="text-xl font-semibold mb-2">Why Volunteer? *</p>
         <textarea
           rows={4}
           placeholder="Describe why you want to volunteer."
@@ -178,7 +169,7 @@ export default function CreateEventPage() {
 
       {/* Requirements */}
       <div>
-        <p className="text-xl font-semibold mb-2">Requirements</p>
+        <p className="text-xl font-semibold mb-2">Requirements *</p>
         <textarea
           rows={4}
           placeholder="Describe any requirements or important details."
@@ -202,7 +193,19 @@ export default function CreateEventPage() {
 
       {/* Action Buttons */}
       <div className="flex gap-4 justify-end mt-4">
-        <button className="px-6 py-2 rounded-xl border bg-white border-gray-400 text-black hover:bg-gray-100">
+        <button
+          onClick={() => {
+            // Reset form
+            setTitle("");
+            setVolunteerDescription("");
+            setRequirementDescription("");
+            setAddress("");
+            setEventId("");
+            setCvFile(null);
+            setAdditionalImage(null);
+          }}
+          className="px-6 py-2 rounded-xl border bg-white border-gray-400 text-black hover:bg-gray-100"
+        >
           Cancel
         </button>
         <button

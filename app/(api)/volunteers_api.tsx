@@ -31,9 +31,11 @@ export interface CreateVolunteerEventPayload {
   cvPath: string;
 }
 
-// Get volunteers for admin's events only
+// Get volunteer applications for admin's events
 export async function getVolunteers(): Promise<{ data: VolunteerProps[] }> {
   try {
+    console.log("📡 Fetching all volunteer applications for admin");
+
     // Get admin's events first
     const eventsResponse = await API.get(
       "/events/organizer/" + localStorage.getItem("userId")
@@ -41,36 +43,49 @@ export async function getVolunteers(): Promise<{ data: VolunteerProps[] }> {
     const adminEvents = eventsResponse.data;
 
     if (!adminEvents || adminEvents.length === 0) {
+      console.log("❌ No events found for this admin");
       return { data: [] };
     }
 
-    // Get volunteers for all admin's events
-    const volunteersPromises = adminEvents.map((event: any) =>
-      API.get(`/events/${event.id}/volunteers`).catch(() => ({ data: [] }))
+    console.log(`📋 Found ${adminEvents.length} events for admin`);
+
+    // Get volunteer applications (not volunteers) for all admin's events
+    const applicationsPromises = adminEvents.map((event: any) =>
+      API.get(`/volunteer/event/${event.id}/applications`).catch((error) => {
+        console.warn(
+          `Failed to fetch applications for event ${event.id}:`,
+          error
+        );
+        return { data: [] };
+      })
     );
 
-    const volunteersResponses = await Promise.all(volunteersPromises);
+    const applicationsResponses = await Promise.all(applicationsPromises);
 
-    // Combine all volunteers from all admin's events
-    const allVolunteers: VolunteerProps[] = [];
+    // Combine all applications from all admin's events
+    const allApplications: VolunteerProps[] = [];
 
-    volunteersResponses.forEach((response, index) => {
-      const eventVolunteers = response.data || [];
+    applicationsResponses.forEach((response, index) => {
+      const eventApplications = response.data || [];
       const eventInfo = adminEvents[index];
 
-      eventVolunteers.forEach((volunteer: any) => {
-        allVolunteers.push({
-          id: volunteer.id,
-          eventId: volunteer.eventId || eventInfo.id,
-          userId: volunteer.userId,
-          status: volunteer.status,
+      console.log(
+        `📋 Event "${eventInfo.name}" has ${eventApplications.length} applications`
+      );
+
+      eventApplications.forEach((application: any) => {
+        allApplications.push({
+          id: application.id,
+          eventId: application.eventId || eventInfo.id,
+          userId: application.userId,
+          status: application.status,
           appliedAt: new Date(
-            volunteer.appliedAt || volunteer.createdAt
+            application.appliedAt || application.createdAt
           ).toLocaleDateString(),
-          approvedAt: volunteer.approvedAt,
-          whyVolunteer: volunteer.whyVolunteer || "",
-          cvPath: volunteer.cvPath,
-          user: volunteer.user,
+          approvedAt: application.approvedAt,
+          whyVolunteer: application.whyVolunteer || "",
+          cvPath: application.cvPath,
+          user: application.user,
           event: {
             id: eventInfo.id,
             name: eventInfo.name,
@@ -80,81 +95,140 @@ export async function getVolunteers(): Promise<{ data: VolunteerProps[] }> {
       });
     });
 
-    return { data: allVolunteers };
+    console.log(`✅ Total applications found: ${allApplications.length}`);
+    return { data: allApplications };
   } catch (error) {
-    console.error("Failed to fetch admin's volunteers:", error);
+    console.error("❌ Failed to fetch volunteer applications:", error);
     return { data: [] };
   }
 }
 
-//  Get volunteers for a specific event
+// Get volunteer applications for a specific event
 export async function getVolunteersByEventId(
   eventId: string
 ): Promise<{ data: VolunteerProps[] }> {
   try {
-    const response = await API.get(`/events/${eventId}/volunteers`);
-    const volunteers = response.data || [];
+    console.log(`📡 Fetching volunteer applications for event: ${eventId}`);
 
-    const transformedVolunteers: VolunteerProps[] = volunteers.map(
-      (volunteer: any) => ({
-        id: volunteer.id,
-        eventId: volunteer.eventId || eventId,
-        userId: volunteer.userId,
-        status: volunteer.status,
+    // Use the applications endpoint instead of volunteers endpoint
+    const response = await API.get(`/volunteer/event/${eventId}/applications`);
+    const applications = response.data || [];
+
+    console.log(
+      `📋 Found ${applications.length} applications for event ${eventId}`
+    );
+
+    const transformedApplications: VolunteerProps[] = applications.map(
+      (application: any) => ({
+        id: application.id,
+        eventId: application.eventId || eventId,
+        userId: application.userId,
+        status: application.status,
         appliedAt: new Date(
-          volunteer.appliedAt || volunteer.createdAt
+          application.appliedAt || application.createdAt
         ).toLocaleDateString(),
-        approvedAt: volunteer.approvedAt,
-        whyVolunteer: volunteer.whyVolunteer || "",
-        cvPath: volunteer.cvPath,
-        user: volunteer.user,
-        event: volunteer.event || { id: eventId, name: "", organizerId: "" },
+        approvedAt: application.approvedAt,
+        whyVolunteer: application.whyVolunteer || "",
+        cvPath: application.cvPath,
+        user: application.user,
+        event: application.event || { id: eventId, name: "", organizerId: "" },
       })
     );
 
-    return { data: transformedVolunteers };
+    console.log(
+      `✅ Transformed ${transformedApplications.length} applications`
+    );
+    return { data: transformedApplications };
   } catch (error) {
-    console.error(`Failed to fetch volunteers for event ${eventId}:`, error);
+    console.error(
+      `❌ Failed to fetch applications for event ${eventId}:`,
+      error
+    );
     return { data: [] };
   }
 }
 
-//  Get a single volunteer by ID
+// Get a single volunteer application by ID
 export async function getVolunteersById(
   volunteerId: string
 ): Promise<{ data: VolunteerProps }> {
-  try {
-    const response = await API.get(`/volunteer/applications/${volunteerId}`);
-    const volunteer = response.data;
+  // alidation and error handling
+  if (!volunteerId || volunteerId === "undefined" || volunteerId === "null") {
+    console.error("❌ Invalid volunteer ID provided:", volunteerId);
+    throw new Error("Invalid volunteer ID provided");
+  }
 
-    const transformedVolunteer: VolunteerProps = {
-      id: volunteer.id,
-      eventId: volunteer.eventId,
-      userId: volunteer.userId,
-      status: volunteer.status,
+  try {
+    console.log(`📡 Fetching volunteer application by ID: ${volunteerId}`);
+    const response = await API.get(`/volunteer/applications/${volunteerId}`);
+    const application = response.data;
+
+    if (!application) {
+      throw new Error("Volunteer application not found");
+    }
+
+    const transformedApplication: VolunteerProps = {
+      id: application.id,
+      eventId: application.eventId,
+      userId: application.userId,
+      status: application.status,
       appliedAt: new Date(
-        volunteer.appliedAt || volunteer.createdAt
+        application.appliedAt || application.createdAt
       ).toLocaleDateString(),
-      approvedAt: volunteer.approvedAt,
-      whyVolunteer: volunteer.whyVolunteer || "",
-      cvPath: volunteer.cvPath,
-      user: volunteer.user,
-      event: volunteer.event,
+      approvedAt: application.approvedAt,
+      whyVolunteer: application.whyVolunteer || "",
+      cvPath: application.cvPath,
+      user: application.user,
+      event: application.event,
     };
 
-    return { data: transformedVolunteer };
+    console.log(
+      "✅ Successfully fetched volunteer application:",
+      transformedApplication
+    );
+    return { data: transformedApplication };
   } catch (error) {
-    console.error(`Failed to fetch volunteer ${volunteerId}:`, error);
-    throw error;
+    console.error(
+      `❌ Failed to fetch volunteer application ${volunteerId}:`,
+      error
+    );
+
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes("404")) {
+        throw new Error(
+          `Volunteer application with ID ${volunteerId} not found`
+        );
+      } else if (error.message.includes("403")) {
+        throw new Error(
+          "You don't have permission to view this volunteer application"
+        );
+      } else {
+        throw new Error(
+          `Failed to fetch volunteer application: ${error.message}`
+        );
+      }
+    }
+
+    throw new Error("Failed to fetch volunteer application data");
   }
 }
 
-//  Update volunteer status (approve/reject)
+// Update volunteer application status (approve/reject)
 export async function updateVolunteerStatus(
   volunteerId: string,
   status: "APPROVED" | "REJECTED"
 ): Promise<VolunteerProps> {
+  // Validate volunteer ID
+  if (!volunteerId || volunteerId === "undefined" || volunteerId === "null") {
+    console.error("❌ Invalid volunteer ID provided:", volunteerId);
+    throw new Error("Invalid volunteer ID provided");
+  }
+
   try {
+    console.log(
+      `📝 Updating volunteer application ${volunteerId} status to ${status}`
+    );
     const response = await API.patch(
       `/volunteer/applications/${volunteerId}/status`,
       {
@@ -162,21 +236,24 @@ export async function updateVolunteerStatus(
       }
     );
 
-    console.log(`Volunteer ${volunteerId} status updated to ${status}`);
+    console.log(
+      `✅ Volunteer application ${volunteerId} status updated to ${status}`
+    );
     return response.data;
   } catch (error) {
-    console.error(`Failed to update volunteer status:`, error);
+    console.error(`❌ Failed to update volunteer application status:`, error);
     throw error;
   }
 }
 
 export async function createVolunteerEvent(data: CreateVolunteerEventPayload) {
   try {
+    console.log("📤 Creating volunteer application:", data);
     const response = await API.post("/volunteer/applications", data);
-    console.log("Volunteer application created:", response.data);
+    console.log("✅ Volunteer application created:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Failed to create volunteer application:", error);
+    console.error("❌ Failed to create volunteer application:", error);
     throw error;
   }
 }

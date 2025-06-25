@@ -1,23 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { ChevronRight, Home, MoreVertical } from "lucide-react";
-import { AttendanceProps } from "@/app/(api)/attendances_api";
-import { deleteEvent, EventProps } from "@/app/(api)/events_api";
-import { VolunteerProps } from "@/app/(api)/volunteers_api";
+import { useState, useEffect, useMemo } from "react";
+import { MoreVertical } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Input } from "@/components/ui/input";
 import ConfirmPopup from "@/components/confirm-popup";
 import TaskBar from "@/components/taskBar";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import DetailSidebar from "@/components/task-detail-sidebar";
 import TaskDetailSidebar from "@/components/task-detail-sidebar";
 import CreateAssignTaskSidebar from "@/components/CreateAssignTaskSidebar";
-import { usePathname } from "next/navigation";
-import { TaskProps } from "@/app/(api)/tasks_api";
 import EventDetailSidebar from "@/components/event-detail-sidebar";
-import AssignTaskSidebar from "@/components/assign-task-sidebar";
 import AssignVolunteerSidebar from "@/components/assign-task-sidebar";
+
+// Import types
+import { EventProps, deleteEvent } from "@/app/(api)/events_api";
+import {
+  VolunteerProps,
+  updateVolunteerStatus,
+} from "@/app/(api)/volunteers_api";
+import { AttendanceProps } from "@/app/(api)/attendances_api";
+import { TaskProps, deleteTask } from "@/app/(api)/tasks_api";
 
 type DataType = "event" | "volunteer" | "attendance" | "volunteer1" | "task";
 
@@ -48,7 +49,6 @@ const headersMap: Record<DataType, string[]> = {
     "Location",
     "Date",
     "Time",
-    // "Organizer",
     "Accepting Volunteers",
     " ",
   ],
@@ -124,6 +124,14 @@ export default function DataTable({
     }
 
     setSelectedRow(row);
+
+    // Debug log to check what data we have
+    console.log("🔍 Selected row data:", row);
+    console.log("🔍 Data type:", dataType);
+    if (dataType === "volunteer" || dataType === "volunteer1") {
+      console.log("🔍 Volunteer ID:", row.id);
+      console.log("🔍 Volunteer user data:", row.user);
+    }
   };
 
   const handleDelete = async (row: any) => {
@@ -134,10 +142,11 @@ export default function DataTable({
           break;
         case "volunteer":
         case "volunteer1":
-          // await deleteVolunteer(row.id);
+          // For volunteers, we might want to update status to REJECTED instead
+          await updateVolunteerStatus(row.id, "REJECTED");
           break;
-        case "attendance":
-          // await deleteAttendance(row.id);
+        case "task":
+          await deleteTask(row.id);
           break;
         default:
           throw new Error("Unsupported delete operation");
@@ -155,7 +164,7 @@ export default function DataTable({
       if (dataType === "event") {
         name = (row as EventProps).name ?? "";
       } else if (dataType.startsWith("volunteer")) {
-        name = (row as VolunteerProps).name ?? "";
+        name = (row as VolunteerProps).user?.fullName ?? "";
       } else if (dataType === "attendance") {
         name = (row as AttendanceProps).user.fullName ?? "";
       } else if (dataType === "task") {
@@ -164,7 +173,7 @@ export default function DataTable({
 
       const matchStatus =
         showStatusToggle && showAttendingOnly
-          ? row.status === (filterStatus || "Attending")
+          ? row.status === (filterStatus || "JOINED")
           : true;
 
       const matchSearch = name.toLowerCase().includes(search.toLowerCase());
@@ -181,8 +190,19 @@ export default function DataTable({
   ]);
 
   const renderRow = (row: any, index: number) => {
+    // Generate unique key for each row based on data type and row ID
+    const getRowKey = (row: any, index: number) => {
+      const baseKey = row.id || `${dataType}-${index}`;
+      return `${dataType}-${baseKey}`;
+    };
+
+    const rowKey = getRowKey(row, index);
+
     const common = (
-      <td className="py-2 px-2 flex justify-center items-center mb-4">
+      <td
+        key={`${rowKey}-actions`}
+        className="py-2 px-2 flex justify-center items-center mb-4"
+      >
         <MoreVertical
           className="mt-6 w-4 h-4 cursor-pointer"
           onClick={(e) => handlePopupClick(e, row)}
@@ -194,114 +214,171 @@ export default function DataTable({
       case "event": {
         const e = row as EventProps;
         return (
-          <>
-            <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{e.id}</td>
-            <td className="py-2 px-2">{e.name}</td>
-            <td className="py-2 px-2">{e.description}</td>
-            <td className="py-2 px-2">{e.venue}</td>
-            <td className="py-2 px-2">{e.date}</td>
-            <td className="py-2 px-2">{e.time}</td>
-            {/* <td className="py-2 px-2">{e.organizer}</td> */}
-            <td className="py-2 px-2 text-center">
-              {e.acceptingVolunteers.toString()}
+          <tr key={rowKey} className="border-b">
+            <td key={`${rowKey}-no`} className="py-2 px-2">
+              {index + 1}
+            </td>
+            <td key={`${rowKey}-id`} className="py-2 px-2">
+              {e.id}
+            </td>
+            <td key={`${rowKey}-name`} className="py-2 px-2">
+              {e.name}
+            </td>
+            <td key={`${rowKey}-desc`} className="py-2 px-2 max-w-xs truncate">
+              {e.description}
+            </td>
+            <td key={`${rowKey}-venue`} className="py-2 px-2">
+              {e.venue}
+            </td>
+            <td key={`${rowKey}-date`} className="py-2 px-2">
+              {e.date}
+            </td>
+            <td key={`${rowKey}-time`} className="py-2 px-2">
+              {e.time}
+            </td>
+            <td key={`${rowKey}-volunteers`} className="py-2 px-2">
+              {e.acceptingVolunteers ? "Yes" : "No"}
             </td>
             {common}
-          </>
+          </tr>
         );
       }
       case "volunteer": {
         const v = row as VolunteerProps;
         return (
-          <>
-            <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{eventName}</td>
-            <td className="py-2 px-2">{v.user?.fullName}</td>
-            <td className="py-2 px-2">{v.status}</td>
-            <td className="py-2 px-2">{v.appliedAt}</td>
-            {common}
-          </>
-        );
-      }
-      case "volunteer1": {
-        const v = row as VolunteerProps;
-        return (
-          <>
-            <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{v.user?.fullName}</td>
-            <td className="py-2 px-2">{v.appliedAt}</td>
-            <td className="py-2 px-2">
+          <tr key={rowKey} className="border-b">
+            <td key={`${rowKey}-no`} className="py-2 px-2">
+              {index + 1}
+            </td>
+            <td key={`${rowKey}-event`} className="py-2 px-2">
+              {v.event?.name || "N/A"}
+            </td>
+            <td key={`${rowKey}-name`} className="py-2 px-2">
+              {v.user?.fullName || "N/A"}
+            </td>
+            <td key={`${rowKey}-status`} className="py-2 px-2">
               <span
-                className={`px-2 py-2 rounded-full text-xs font-medium ${
+                className={`px-2 py-1 rounded-full text-xs ${
                   v.status === "APPROVED"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-orange-100 text-orange-600"
+                    ? "bg-green-100 text-green-800"
+                    : v.status === "REJECTED"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
                 }`}
               >
                 {v.status}
               </span>
             </td>
-            <td className="py-2 px-2">{v.event.name}</td>
-            {/* <td className="py-2 px-2">{v.user?.fullName}</td> */}
+            <td key={`${rowKey}-applied`} className="py-2 px-2">
+              {v.appliedAt}
+            </td>
             {common}
-          </>
+          </tr>
+        );
+      }
+      case "volunteer1": {
+        const v = row as VolunteerProps;
+        return (
+          <tr key={rowKey} className="border-b">
+            <td key={`${rowKey}-no`} className="py-2 px-2">
+              {index + 1}
+            </td>
+            <td key={`${rowKey}-name`} className="py-2 px-2">
+              {v.user?.fullName || "N/A"}
+            </td>
+            <td key={`${rowKey}-applied`} className="py-2 px-2">
+              {v.appliedAt}
+            </td>
+            <td key={`${rowKey}-status`} className="py-2 px-2">
+              <span
+                className={`px-2 py-1 rounded-full text-xs ${
+                  v.status === "APPROVED"
+                    ? "bg-green-100 text-green-800"
+                    : v.status === "REJECTED"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {v.status}
+              </span>
+            </td>
+            <td key={`${rowKey}-event`} className="py-2 px-2">
+              {v.event?.name || "N/A"}
+            </td>
+            {common}
+          </tr>
         );
       }
       case "attendance": {
         const a = row as AttendanceProps;
         return (
-          <>
-            <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{a.userId}</td>
-            <td className="py-2 px-2">{a.user.fullName}</td>
-            <td className="py-2 px-2">{a.user.email}</td>
-            <td className="py-2 px-2">{a.user.gender.toLowerCase()}</td>
-            <td className="py-2 px-2">
-              <span
-                className={
-                  a.status === "JOINED" ? "text-green-600" : "text-orange-500"
-                }
-              >
-                {a.status}
-              </span>
+          <tr key={rowKey} className="border-b">
+            <td key={`${rowKey}-no`} className="py-2 px-2">
+              {index + 1}
             </td>
-            <td className="py-2 px-2">{a.registeredAt}</td>
+            <td key={`${rowKey}-userId`} className="py-2 px-2">
+              {a.userId}
+            </td>
+            <td key={`${rowKey}-fullName`} className="py-2 px-2">
+              {a.user.fullName}
+            </td>
+            <td key={`${rowKey}-email`} className="py-2 px-2">
+              {a.user.email}
+            </td>
+            <td key={`${rowKey}-gender`} className="py-2 px-2">
+              {a.user.gender}
+            </td>
+            <td key={`${rowKey}-status`} className="py-2 px-2">
+              {a.status}
+            </td>
+            <td key={`${rowKey}-registered`} className="py-2 px-2">
+              {a.registeredAt}
+            </td>
             {common}
-          </>
+          </tr>
         );
       }
       case "task": {
         const t = row as TaskProps;
         return (
-          <>
-            <td className="py-2 px-2">{index + 1}</td>
-            <td className="py-2 px-2">{t.name}</td>
-            <td className="py-2 px-2">{t.description}</td>
-
-            <td className="py-2 px-2">
+          <tr key={rowKey} className="border-b">
+            <td key={`${rowKey}-no`} className="py-2 px-2">
+              {index + 1}
+            </td>
+            <td key={`${rowKey}-name`} className="py-2 px-2">
+              {t.name}
+            </td>
+            <td key={`${rowKey}-desc`} className="py-2 px-2 max-w-xs truncate">
+              {t.description}
+            </td>
+            <td key={`${rowKey}-status`} className="py-2 px-2">
               <span
-                className={`px-2 py-2 rounded-full text-xs font-medium ${
+                className={`px-2 py-1 rounded-full text-xs ${
                   t.status === "COMPLETED"
-                    ? "bg-green-100 text-green-600"
+                    ? "bg-green-100 text-green-800"
                     : t.status === "IN_PROGRESS"
-                    ? "bg-yellow-100 text-yellow-600"
-                    : "bg-orange-100 text-orange-600"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-yellow-100 text-yellow-800"
                 }`}
               >
                 {t.status}
               </span>
             </td>
-            <td className="py-2 px-2">{t.type}</td>
-            <td className="py-2 px-2">
+            <td key={`${rowKey}-type`} className="py-2 px-2">
+              {t.type}
+            </td>
+            <td key={`${rowKey}-due`} className="py-2 px-2">
               {new Date(t.dueDate).toLocaleDateString()}
             </td>
-            <td className="py-2 px-2">{t.event.name}</td>
+            <td key={`${rowKey}-event`} className="py-2 px-2">
+              {t.event?.name || "N/A"}
+            </td>
             {common}
-          </>
+          </tr>
         );
       }
       default:
-        return <td colSpan={8}>Unsupported type</td>;
+        return null;
     }
   };
 
@@ -313,64 +390,45 @@ export default function DataTable({
 
   return (
     <div>
-      <div className="flex justify-between">
-        {title ? (
-          <div className="flex gap-1 items-center text-sm text-muted-foreground mb-2">
-            <Link href="/admin/events/" className="flex items-center">
-              <Home size={14} className="mr-1" />
-              <p>Events</p>
-            </Link>
-            <ChevronRight size={18} />
-            <p>{title}</p>
-          </div>
-        ) : (
-          <div className="flex justify-center items-center mb-4">
-            Show Volunteers
-          </div>
-        )}
-
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex gap-4 items-center">
-            {showStatusToggle && (
-              <>
-                <h2 className="text-xl font-semibold">
-                  {showAttendingOnly
-                    ? `${filterStatus || "Attending"} Only`
-                    : `${title} List`}
-                </h2>
-                <Switch
-                  checked={showAttendingOnly}
-                  onCheckedChange={setShowAttendingOnly}
-                />
-              </>
-            )}
-            <Input
-              type="text"
-              placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-48"
-            />
-          </div>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="flex items-center gap-4">
+          {showStatusToggle && (
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showAttendingOnly}
+                onChange={(e) => setShowAttendingOnly(e.target.checked)}
+              />
+              Show {filterStatus || "Attending"} only
+            </label>
+          )}
+          <Input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-48"
+          />
         </div>
       </div>
 
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b text-muted-foreground bg-gray-200">
+          <tr className="border-b bg-gray-50">
             {headersMap[dataType].map((header, index) => (
-              <th key={index} className="py-2 px-2 text-black">
+              <th
+                key={`header-${dataType}-${index}`}
+                className="py-2 px-2 font-medium text-gray-900"
+              >
                 {header}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {filteredRows.map((row, index) => (
-            <tr key={index} className="border-b hover:bg-muted/30">
-              {renderRow(row, index)}
-            </tr>
-          ))}
+          {/* Add unique keys for each row */}
+          {filteredRows.map((row, index) => renderRow(row, index))}
         </tbody>
       </table>
 
@@ -379,6 +437,22 @@ export default function DataTable({
           showOpenTaskSidebar={showOpenTaskSidebar}
           position={popupPosition}
           onOpenTask={() => {
+            // validation and logging
+            console.log("🔍 Opening task bar for selected row:", selectedRow);
+
+            if (dataType === "volunteer" || dataType === "volunteer1") {
+              if (!selectedRow || !selectedRow.id) {
+                console.error("❌ No volunteer ID found in selected row");
+                alert("Error: Volunteer data is missing");
+                setPopupPosition(null);
+                return;
+              }
+              console.log(
+                "✅ Opening task bar for volunteer ID:",
+                selectedRow.id
+              );
+            }
+
             setShowTaskBar(true);
             setPopupPosition(null);
           }}
@@ -394,6 +468,16 @@ export default function DataTable({
             setShowDetailCreateTaskSidebar(true);
           }}
           onAssignTaskToVolunteer={() => {
+            console.log(
+              "🔍 Assign task to volunteer - selected row:",
+              selectedRow
+            );
+            if (!selectedRow || !selectedRow.user?.id) {
+              console.error("❌ No user ID found in selected volunteer row");
+              alert("Error: Volunteer user data is missing");
+              setPopupPosition(null);
+              return;
+            }
             setPopupPosition(null);
             setShowAssignTaskSidebar(true);
           }}
@@ -409,10 +493,11 @@ export default function DataTable({
         />
       )}
 
-      {showTaskBar && (
+      {showTaskBar && selectedRow && (
         <TaskBar
           onClose={() => setShowTaskBar(false)}
-          volunteerId={JSON.stringify(selectedRow?.id)}
+          // Use the correct volunteer ID
+          volunteerId={selectedRow.id}
         />
       )}
 
@@ -432,11 +517,11 @@ export default function DataTable({
 
       {showAssignTaskSidebar && selectedRow && (
         <AssignVolunteerSidebar
-          volunteerId={selectedRow.user.id}
+          // Use the correct user ID for task assignment
+          volunteerId={selectedRow.user?.id || selectedRow.userId}
           eventId={selectedRow.eventId}
           onClose={() => {
             setShowAssignTaskSidebar(false);
-            console.log("sss: " + JSON.stringify(selectedRow));
           }}
         />
       )}
