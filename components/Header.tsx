@@ -1,26 +1,42 @@
 "use client";
-import { useAdmin } from "@/app/context/adminContext";
+import { useAdmin } from "@/app/hooks/AdminContext";
 import {
-  ArrowDownCircle,
-  BellDot,
   ChevronDown,
   Menu,
   PanelLeft,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
+import { getProfile, ProfileProps } from "@/app/(api)/profile_api";
+import NotificationDropdown from "./notification-dropdown";
 
 export default function Header() {
   const { isActiveSidebar, setIsActiveSidebar } = useAdmin();
   const [search, setSearch] = useState("");
 
-  const user = {
-    name: "Wathrak",
-    email: "wathrak1@gmail.com",
-    role: "Admin",
-  };
+  const [user, setUser] = useState<ProfileProps | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const data = await getProfile();
+        setUser(data);
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      }
+    }
+
+    fetchUser();
+  }, []);
+
+  // const user = {
+  //   name: "Wathrak",
+  //   email: "wathrak1@gmail.com",
+  //   role: "Admin",
+  // };
+
   return (
     <div className="bg-white h-16 flex justify-start items-center gap-4">
       <div className={`${isActiveSidebar ? "block" : "hidden"} min-w-64`}>
@@ -51,7 +67,9 @@ export default function Header() {
         </div>
 
         <div className="flex justify-center items-center gap-6">
-          <BellDot color="blue" />
+          <div className="ml-auto flex items-center space-x-4 mt-2">
+            <NotificationDropdown />
+          </div>
           <div className="w-7">
             <img src="/GBR.svg" alt="eng-flag" className="rounded-sm" />
           </div>
@@ -63,12 +81,12 @@ export default function Header() {
 
           <Avatar className="border rounded-full">
             <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>{user.name[0]}</AvatarFallback>
+            <AvatarFallback>{user?.username[0]}</AvatarFallback>
           </Avatar>
 
           <div className="flex flex-col text-center">
-            <div className="font-semibold">{user.name}</div>
-            <div className="text-gray-600 text-sm">{user.role}</div>
+            <div className="font-semibold">{user?.username}</div>
+            <div className="text-gray-600 text-sm">{user?.systemRole}</div>
           </div>
 
           <button className="w-5 h-5 mr-4 flex justify-center items-center border border-black rounded-full">

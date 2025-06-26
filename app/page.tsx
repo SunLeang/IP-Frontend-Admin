@@ -1,15 +1,17 @@
 "use client";
-import { useState } from "react";
-import Image from "next/image";
 import { redirect } from "next/navigation";
-// import Dashboard from "../components/dashboard";
+import { useRolePrefix } from "./hooks/RolePrefix";
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const rolePrefix = useRolePrefix();
 
-  if (isLoggedIn) {
-    // return <Dashboard />;
+  if (!localStorage.getItem("refreshToken")) {
+    redirect("/login");
   }
 
-  redirect("/admin/dashboard");
+  if (!rolePrefix) {
+    return <div>Loading...</div>;
+  }
+
+  redirect(`/${rolePrefix}/dashboard`);
 }

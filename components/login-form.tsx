@@ -3,17 +3,13 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/hooks/AuthContext";
 
 export default function LoginForm() {
-  const router = useRouter();
-  const { setUser, loginApi } = useAuth();
+  const { loginApi, loading } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState<"admin" | "superAdmin">(
-    "superAdmin"
-  );
+  const [loginType, setLoginType] = useState<"admin" | "superAdmin">("admin");
   const [formValues, setFormValues] = useState({
     username: "",
     email: "",
@@ -28,6 +24,27 @@ export default function LoginForm() {
     email: "",
   });
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // ✅ Clear form when switching login types
+  const toggleLoginType = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setLoginType((prev) => (prev === "admin" ? "superAdmin" : "admin"));
+      setFormValues({
+        username: "",
+        email: "",
+        password: "",
+      });
+      setTouched({
+        username: false,
+        email: false,
+        password: false,
+      });
+      setErrors({ email: "" });
+      setIsTransitioning(false);
+    }, 300);
+  };
 
   // Validate email format
   useEffect(() => {
@@ -59,22 +76,46 @@ export default function LoginForm() {
     }));
   };
 
-  const toggleLoginType = () => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setLoginType((prev) => (prev === "admin" ? "superAdmin" : "admin"));
-      setIsTransitioning(false);
-    }, 300);
+  const handleLogin = async () => {
+    // Validate required fields
+    if (!formValues.email || !formValues.password) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    if (loginType === "superAdmin" && !formValues.username) {
+      alert("Username is required for Super Admin login");
+      return;
+    }
+
+    if (errors.email) {
+      alert("Please fix email format");
+      return;
+    }
+
+    setIsLoggingIn(true);
+
+    try {
+      console.log("🔄 Starting login for:", loginType);
+
+      const result = await loginApi({
+        ...formValues,
+        systemRole: loginType === "admin" ? "ADMIN" : "SUPER_ADMIN",
+      });
+
+      if (!result.success) {
+        alert(result.message || "Login failed.");
+      }
+    } catch (error) {
+      console.error("❌ Login error:", error);
+      alert("An unexpected error occurred during login.");
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
-  const handleLogin = () => {
-    loginApi(formValues);
-    console.log("login page");
-
-    // router.push(`/${loginType}/dashboard`);
-  };
-
-  console.log("formValues:", formValues);
+  // ✅ Disable form during login
+  const isFormDisabled = loading || isLoggingIn || isTransitioning;
 
   return (
     <div className="flex flex-col flex-1 p-7 items-center pt-12">
@@ -84,7 +125,11 @@ export default function LoginForm() {
         </div>
 
         <h1 className="text-[#0F172A] text-xl font-medium font-['Kantumruy_Pro'] mb-2">
-          Logining in your account
+          {isLoggingIn
+            ? "Logging in..."
+            : `Logging in as ${
+                loginType === "admin" ? "Admin" : "Super Admin"
+              }`}
         </h1>
 
         <div className="flex flex-col gap-4 w-full">
@@ -115,6 +160,7 @@ export default function LoginForm() {
                       onBlur={handleBlur}
                       placeholder="Username"
                       className="w-full text-base text-[#0F172A] placeholder:text-[#64748B] font-['Kantumruy_Pro'] outline-none"
+                      disabled={isFormDisabled}
                     />
                   </div>
                 </div>
@@ -139,6 +185,7 @@ export default function LoginForm() {
                     onBlur={handleBlur}
                     placeholder="Email"
                     className="w-full text-base text-[#0F172A] placeholder:text-[#64748B] font-['Kantumruy_Pro'] outline-none"
+                    disabled={isFormDisabled}
                   />
                   {touched.email && formValues.email && (
                     <div className="flex items-center ml-1">
@@ -176,12 +223,15 @@ export default function LoginForm() {
                     onBlur={handleBlur}
                     placeholder="Password"
                     className="w-full text-base text-[#0F172A] placeholder:text-[#64748B] font-['Kantumruy_Pro'] outline-none [appearance:textfield] [&::-ms-reveal]:hidden [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                    disabled={isFormDisabled}
                   />
                 </div>
 
                 <div
                   className="flex items-center px-4 cursor-pointer text-[#64748B] hover:text-[#4880FF] transition-colors duration-200"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() =>
+                    !isFormDisabled && setShowPassword(!showPassword)
+                  }
                 >
                   {showPassword ? (
                     <Icon icon="octicon:eye-24" width="1.4em" height="1.4em" />
@@ -200,15 +250,32 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={handleLogin}
-            className="flex justify-center items-center w-full h-[50px] bg-[#4880FF] rounded-[10px] text-white text-base font-['Kantumruy_Pro'] mt-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:bg-[#3A70F0]"
+            disabled={isFormDisabled}
+            className={`flex justify-center items-center w-full h-[50px] rounded-[10px] text-white text-base font-['Kantumruy_Pro'] mt-3 shadow-md transition-all duration-200 ${
+              isFormDisabled
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#4880FF] hover:bg-[#3A70F0] hover:shadow-lg"
+            }`}
           >
-            Login
+            {isLoggingIn ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Logging in...
+              </div>
+            ) : (
+              "Login"
+            )}
           </button>
 
           <div className="flex justify-center mt-2">
             <button
               onClick={toggleLoginType}
-              className="text-[#4880FF] text-sm hover:underline font-['Kantumruy_Pro'] hover:text-[#3A70F0] transition-colors duration-200"
+              disabled={isFormDisabled}
+              className={`text-sm font-['Kantumruy_Pro'] transition-colors duration-200 ${
+                isFormDisabled
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-[#4880FF] hover:underline hover:text-[#3A70F0]"
+              }`}
             >
               {loginType === "admin"
                 ? "Login as Super Admin"

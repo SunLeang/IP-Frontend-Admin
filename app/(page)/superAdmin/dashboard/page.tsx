@@ -1,139 +1,127 @@
-/* eslint-disable react/jsx-no-undef */
 "use client";
-import { PieChart } from "lucide-react";
-import React from "react";
+import { useState } from "react";
+import EventDetailsSummary from "./(components)/EventDetailsSummary";
+import EventDetails from "./(components)/EventDetails";
+import dynamic from "next/dynamic";
+import { colorPairs, colors } from "./(components)/ColorPairs";
+import { useQuery } from "@tanstack/react-query";
+import { getAttendanceStatsByEventId } from "@/app/(api)/attendances_api";
+import {
+  getDashboardStats,
+  getDashboardUpcoming,
+} from "@/app/(api)/dashboard_api";
 
-const Dashboard = () => {
+// Hydration Fail Error (Fix By Disabling Server Side Rendering)
+const EventDetailsChart = dynamic(
+  () => import("./(components)/EventDetailsChart"),
+  {
+    ssr: false,
+  }
+);
+
+export default function Dashboard() {
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: () => getDashboardStats(),
+  });
+
+  const { data: upcoming } = useQuery({
+    queryKey: ["upcoming"],
+    queryFn: () => getDashboardUpcoming(),
+  });
+
+  const [isViewChart, setIsViewChart] = useState(false);
+
+  const cardData = [
+    {
+      title: "Total Attendees",
+      value: `${stats?.totalAttendees}`,
+      growth: "+8.5%",
+      note: "Up from past week",
+      icon: "🧍",
+      color: "text-green-500",
+    },
+    {
+      title: "Total Volunteers",
+      value: `${stats?.totalVolunteers}`,
+      growth: "+1.3%",
+      note: "Up from past week",
+      icon: "📦",
+      color: "text-green-500",
+    },
+    {
+      title: "Total Events",
+      value: `${stats?.totalEvents}`,
+      growth: "-4.3%",
+      note: "Down from past week",
+      icon: "📈",
+      color: "text-red-500",
+    },
+    {
+      title: "Completed Events",
+      value: `${stats?.completedEvents}`,
+      growth: "+1.8%",
+      note: "Up from past week",
+      icon: "⏱️",
+      color: "text-green-500",
+    },
+  ];
+
+  if (!upcoming) return <div>Loading...</div>;
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-100 min-h-screen">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-          Download Report
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card title="Total Attendee" value="40,689" growth="+8.5%" note="Up from yesterday" icon="🧍" color="text-green-500" />
-        <Card title="Total Volunteer" value="10,293" growth="+1.3%" note="Up from past week" icon="📦" color="text-green-500" />
-        <Card title="Total Event" value="2" growth="-4.3%" note="Down from yesterday" icon="📈" color="text-red-500" />
-        <Card title="Pending Volunteers" value="10" growth="+1.8%" note="Up from yesterday" icon="⏱️" color="text-green-500" />
+      {/* Events Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {cardData.map((card, index) => (
+          <Card key={index} {...card} />
+        ))}
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-        <h2 className="text-lg font-semibold mb-4">Statistic Event Details</h2>
-        <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-      <div className="flex items-center mb-4">
-        <PieChart className="h-5 w-5 text-blue-600 mr-10 justify-between-center " />
-       
-      </div>
-    </div>
-             
-  <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-    <thead className="text-gray-600">
-      <tr>
-        <th className="p-2">No.</th>
-        <th className="p-2">Event</th>
-        <th className="p-2">Attendee</th>
-        <th className="p-2">Volunteer</th>
-        <th className="p-2">Progress</th>
-      </tr>
-    </thead>
-    <tbody>
-      <EventRow
-        number={1}
-        name="Songkran"
-        attendee="121/121"
-        volunteer="10/10"
-        progress={100}
-        status="Full"
-      />
-      <EventRow
-        number={2}
-        name="BookFair"
-        attendee="113/220"
-        volunteer="18/20"
-        progress={56}
-        status="Pending"
-      />
-    </tbody>
-  </table>
-      </div>
-      
-      {/* <div>
-        dashboard
+      {/* Summary Details and Chart */}
+      {isViewChart ? (
+        <EventDetailsChart
+          data={upcoming || []}
+          setIsViewChart={setIsViewChart}
+          // colorPairs={colorPairs}
+        />
+      ) : (
+        <EventDetailsSummary
+          data={upcoming || []}
+          setIsViewChart={setIsViewChart}
+          colorPairs={colorPairs}
+        />
+      )}
 
-        <h1>Event</h1>
-        <h2>Volunteer</h2>
-        <h3>Annoucement</h3>
-
-        
-      </div> */}
-
-
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold mb-4">Event Details</h2>
-        <table className="w-full text-sm text-left">
-          <thead className="text-gray-500">
-            <tr>
-              <th>Event Name</th>
-              <th>Location</th>
-              <th>Date - Time</th>
-              <th>Attendee</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <EventDetailRow name="Songkran" location="Aeon Mall Sensok" date="12.09.2025 - 12.53 PM" attendee="121/121" status="Full" />
-            <EventDetailRow name="BookFair" location="Institute of Technology of Cambodia" date="12.09.2025 - 12.53 PM" attendee="113/220" status="Pending" />
-          </tbody>
-        </table>
-      </div>
+      {/* Detailed Table */}
+      <EventDetails data={upcoming || []} />
     </div>
   );
-};
+}
 
-// Small reusable components
-const Card = ({ title, value, growth, note, icon, color }: any) => (
+interface CardProps {
+  title: string;
+  value: string;
+  growth: string;
+  note: string;
+  icon: string;
+  color: string;
+}
+
+const Card = ({ title, value, growth, note, icon, color }: CardProps) => (
   <div className="bg-white p-4 rounded-lg shadow-md">
     <div className="flex items-center justify-between mb-2">
       <span className="text-sm font-medium text-gray-600">{title}</span>
       <span className="text-xl">{icon}</span>
     </div>
     <div className="text-2xl font-bold">{value}</div>
-    <div className={`text-sm ${color}`}>{growth} {note}</div>
+    <div className={`text-sm ${color}`}>
+      {growth} {note}
+    </div>
   </div>
 );
-
-const EventRow = ({ number, name, attendee, volunteer, progress }: any) => (
-  <tr className="border-t">
-    <td>{number}</td>
-    <td>{name}</td>
-    <td>{attendee}</td>
-    <td>{volunteer}</td>
-    <td>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div
-          className={`h-2.5 rounded-full ${progress === 100 ? 'bg-green-500' : 'bg-yellow-400'}`}
-          style={{ width: `${progress}%` }}
-        ></div>
-      </div>
-    </td>
-  </tr>
-);
-
-const EventDetailRow = ({ name, location, date, attendee, status }: any) => (
-  <tr className="border-t">
-    <td>{name}</td>
-    <td>{location}</td>
-    <td>{date}</td>
-    <td>{attendee}</td>
-    <td>
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status === "Full" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-        {status}
-      </span>
-    </td>
-  </tr>
-);
-
-export default Dashboard;

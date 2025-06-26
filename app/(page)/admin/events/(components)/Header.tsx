@@ -11,13 +11,13 @@ export default function Header() {
 
   const links = isCreateEvent
     ? [
-        { href: "/admin/events/create_event/details", label: "Details" },
+        { href: "/admin/events/create_event/event", label: "Details" },
         { href: "/admin/events/create_event/volunteer", label: "Volunteer" },
       ]
     : [
-        { href: "/admin/events/lists/details", label: "Details" },
-        { href: "/admin/events/lists/volunteer", label: "Volunteer" },
-        { href: "/admin/events/lists/attendee", label: "Attendee" },
+        { href: "/admin/events/lists/events", label: "Details" },
+        { href: "/admin/events/lists/volunteers", label: "Volunteer" },
+        { href: "/admin/events/lists/attendees", label: "Attendee" },
       ];
 
   return (
