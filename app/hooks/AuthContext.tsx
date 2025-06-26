@@ -9,10 +9,6 @@ import {
 } from "react";
 import API from "../utils/AxiosInstance";
 
-// admin@example.com
-// Password123!
-// adminuser
-
 interface UserProps {
   id?: string;
   email: string;
@@ -31,6 +27,7 @@ interface AuthContextType {
   logoutApi: () => void;
   isAuthReady: boolean;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,17 +39,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserProps>(undefined as any);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Enhanced logout function to clear everything
+  const logoutApi = () => {
+    console.log("🔄 Starting logout process...");
+    setLoading(true);
+
+    try {
+      // Clear all state
+      setAccessToken("");
+      setIsAuthenticated(false);
+      setUser({ email: "", password: "", systemRole: "" });
+
+      // Clear all localStorage items
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("user");
+
+      // Clear sessionStorage as well
+      sessionStorage.clear();
+
+      // Remove authorization header
+      delete API.defaults.headers.common["Authorization"];
+
+      console.log("✅ Logout completed successfully");
+
+      // Add small delay before redirect
+      setTimeout(() => {
+        router.push("/login");
+        setLoading(false);
+      }, 100);
+    } catch (error) {
+      console.error("❌ Error during logout:", error);
+      setLoading(false);
+    }
+  };
 
   const loginApi = async (
     user: UserProps
   ): Promise<{ success: boolean; message?: string }> => {
     try {
+      setLoading(true);
+      console.log("🔄 Starting login process for:", user.email);
+
+      // ✅ Clear any existing auth data before login
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userId");
+      delete API.defaults.headers.common["Authorization"];
+
       const response = await API.post(`/auth/login`, {
         email: user.email,
         password: user.password,
       });
 
       const { user: userData, accessToken, refreshToken } = response.data;
+
+      console.log(
+        "✅ Login response received for user:",
+        userData.email,
+        "Role:",
+        userData.systemRole
+      );
 
       // Role check
       const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
@@ -61,19 +111,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (userData && accessToken && refreshToken) {
+        // ✅ Set user data first
         setUser(userData);
-        localStorage.setItem("userId", userData.id);
-
         setAccessToken(accessToken);
         setIsAuthenticated(true);
 
+        // ✅ Store tokens properly
+        localStorage.setItem("userId", userData.id);
         localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("accessToken", accessToken);
 
+        // ✅ Set authorization header
         API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
+        console.log("✅ User authenticated successfully:", userData.systemRole);
+
+        // ✅ Redirect based on role
         if (userData.systemRole === "SUPER_ADMIN") {
+          console.log("🔄 Redirecting to Super Admin dashboard");
           router.push("/superAdmin/dashboard");
         } else if (userData.systemRole === "ADMIN") {
+          console.log("🔄 Redirecting to Admin dashboard");
           router.push("/admin/dashboard");
         }
 
@@ -84,11 +142,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           message: "Login failed due to missing credentials.",
         };
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("❌ Login error:", error);
+
+      // Clear any partial auth data on error
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userId");
+      delete API.defaults.headers.common["Authorization"];
+
       return {
         success: false,
-        message: "Error during login. Please try again.",
+        message:
+          error.response?.data?.message ||
+          "Error during login. Please try again.",
       };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,15 +167,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (!localRefreshToken) {
       setIsAuthReady(true);
+      setLoading(false);
       return;
     }
 
     try {
+      setLoading(true);
+      console.log("🔄 Attempting token refresh...");
+
       const response = await API.post(`/auth/refresh`, {
         refreshToken: localRefreshToken,
       });
-
-      // console.log("REFRESH response data:", response.data);
 
       const {
         accessToken: newAccessToken,
@@ -113,15 +185,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: userData,
       } = response.data;
 
-      // console.log("User data from refresh:", userData);
+      if (newAccessToken && newRefreshToken && userData) {
+        console.log(
+          "✅ Token refresh successful for user:",
+          userData.email,
+          "Role:",
+          userData.systemRole
+        );
 
-      if (newAccessToken && newRefreshToken) {
         setAccessToken(newAccessToken);
         setUser(userData);
-        // console.log("User set in context refresh:", userData);
-
         setIsAuthenticated(true);
+
+        // ✅ Update stored tokens
         localStorage.setItem("refreshToken", newRefreshToken);
+        localStorage.setItem("accessToken", newAccessToken);
+        localStorage.setItem("userId", userData.id);
 
         API.defaults.headers.common[
           "Authorization"
@@ -130,25 +209,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Invalid refresh response");
       }
     } catch (error) {
+      console.error("❌ Token refresh failed:", error);
+
+      // ✅ Clear all auth data on refresh failure
       setAccessToken("");
       setIsAuthenticated(false);
       setUser({ email: "", password: "", systemRole: "" });
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userId");
       localStorage.removeItem("user");
-      console.log("Refresh token invalid or expired:", error);
+      delete API.defaults.headers.common["Authorization"];
     } finally {
       setIsAuthReady(true);
+      setLoading(false);
     }
-  };
-
-  const logoutApi = () => {
-    setAccessToken("");
-    setIsAuthenticated(false);
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-
-    delete API.defaults.headers.common["Authorization"];
-    router.push("/login");
   };
 
   useEffect(() => {
@@ -159,20 +234,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!localRefreshToken) {
         setIsAuthReady(true);
+        setLoading(false);
         return;
       }
 
       try {
         await refreshTokenState();
       } catch (error) {
+        console.error("❌ Auth initialization error:", error);
+
+        // Clear everything on init error
         setAccessToken("");
         setIsAuthenticated(false);
         setUser({ email: "", password: "", systemRole: "" });
         localStorage.removeItem("refreshToken");
-
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("userId");
         delete API.defaults.headers.common["Authorization"];
       } finally {
-        setIsAuthReady(true);
+        if (isMounted) {
+          setIsAuthReady(true);
+          setLoading(false);
+        }
       }
     }
 
@@ -185,7 +268,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loginApi, logoutApi, isAuthReady, isAuthenticated }}
+      value={{
+        user,
+        loginApi,
+        logoutApi,
+        isAuthReady,
+        isAuthenticated,
+        loading,
+      }}
     >
       {isAuthReady ? children : <div>Loading...</div>}
     </AuthContext.Provider>

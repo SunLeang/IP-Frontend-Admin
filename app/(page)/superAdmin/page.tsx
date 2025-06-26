@@ -6,7 +6,7 @@ import { useAuth } from "@/app/hooks/AuthContext";
 import { useEffect } from "react";
 
 export default function SuperAdminPage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth(); // ✅ Now loading exists
   const rolePrefix = useRolePrefix();
 
   useEffect(() => {

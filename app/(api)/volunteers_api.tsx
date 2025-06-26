@@ -10,6 +10,11 @@ export interface VolunteerProps {
   approvedAt?: string;
   whyVolunteer: string;
   cvPath?: string;
+  fullName: string;
+  email: string;
+  gender?: string;
+  age?: string;
+  eventName: string;
   user: {
     id: string;
     fullName: string;
@@ -85,6 +90,12 @@ export async function getVolunteers(): Promise<{ data: VolunteerProps[] }> {
           approvedAt: application.approvedAt,
           whyVolunteer: application.whyVolunteer || "",
           cvPath: application.cvPath,
+          // ✅ Add flat fields for TaskBar compatibility
+          fullName: application.user?.fullName || "",
+          email: application.user?.email || "",
+          gender: application.user?.gender,
+          age: application.user?.age?.toString(),
+          eventName: eventInfo.name,
           user: application.user,
           event: {
             id: eventInfo.id,
@@ -130,6 +141,12 @@ export async function getVolunteersByEventId(
         approvedAt: application.approvedAt,
         whyVolunteer: application.whyVolunteer || "",
         cvPath: application.cvPath,
+        // ✅ Add flat fields for TaskBar compatibility
+        fullName: application.user?.fullName || "",
+        email: application.user?.email || "",
+        gender: application.user?.gender,
+        age: application.user?.age?.toString(),
+        eventName: application.event?.name || "",
         user: application.user,
         event: application.event || { id: eventId, name: "", organizerId: "" },
       })
@@ -148,24 +165,43 @@ export async function getVolunteersByEventId(
   }
 }
 
-// Get a single volunteer application by ID
-export async function getVolunteersById(
-  volunteerId: string
-): Promise<{ data: VolunteerProps }> {
-  // alidation and error handling
-  if (!volunteerId || volunteerId === "undefined" || volunteerId === "null") {
-    console.error("❌ Invalid volunteer ID provided:", volunteerId);
+// ✅ FIXED: Single getVolunteersById function with proper field mapping
+export async function getVolunteersById(id: string): Promise<VolunteerProps> {
+  // Validation and error handling
+  if (!id || id === "undefined" || id === "null") {
+    console.error("❌ Invalid volunteer ID provided:", id);
     throw new Error("Invalid volunteer ID provided");
   }
 
   try {
-    console.log(`📡 Fetching volunteer application by ID: ${volunteerId}`);
-    const response = await API.get(`/volunteer/applications/${volunteerId}`);
+    console.log(`📡 Fetching volunteer application by ID: ${id}`);
+    const response = await API.get(`/volunteer/applications/${id}`);
     const application = response.data;
 
     if (!application) {
       throw new Error("Volunteer application not found");
     }
+
+    // ✅ Enhanced debugging to see what backend returns
+    console.log("✅ Raw volunteer data from API:", {
+      id: application.id,
+      fullName: application.user?.fullName,
+      email: application.user?.email,
+      whyVolunteer: application.whyVolunteer,
+      cvPath: application.cvPath,
+      // Debug the actual field names returned
+      allFields: Object.keys(application),
+      userFields: application.user ? Object.keys(application.user) : [],
+      // Check if there are alternative field names
+      alternativeFields: {
+        reason: application.reason,
+        volunteerReason: application.volunteerReason,
+        applicationReason: application.applicationReason,
+        cv: application.cv,
+        cvDocument: application.cvDocument,
+        documentPath: application.documentPath,
+      },
+    });
 
     const transformedApplication: VolunteerProps = {
       id: application.id,
@@ -176,29 +212,53 @@ export async function getVolunteersById(
         application.appliedAt || application.createdAt
       ).toLocaleDateString(),
       approvedAt: application.approvedAt,
-      whyVolunteer: application.whyVolunteer || "",
-      cvPath: application.cvPath,
+      // ✅ Try different possible field names for volunteer reason
+      whyVolunteer:
+        application.whyVolunteer ||
+        application.reason ||
+        application.volunteerReason ||
+        application.applicationReason ||
+        "",
+      // ✅ Try different possible field names for CV path
+      cvPath:
+        application.cvPath ||
+        application.cv ||
+        application.cvDocument ||
+        application.documentPath ||
+        "",
+      // ✅ Add flat fields for TaskBar compatibility
+      fullName: application.user?.fullName || "",
+      email: application.user?.email || "",
+      gender: application.user?.gender,
+      age: application.user?.age?.toString(),
+      eventName: application.event?.name || "Unknown Event",
       user: application.user,
       event: application.event,
     };
 
     console.log(
-      "✅ Successfully fetched volunteer application:",
-      transformedApplication
+      "✅ Successfully fetched and transformed volunteer application:",
+      {
+        id: transformedApplication.id,
+        fullName: transformedApplication.fullName,
+        email: transformedApplication.email,
+        whyVolunteer: transformedApplication.whyVolunteer
+          ? "✅ Present"
+          : "❌ Missing",
+        cvPath: transformedApplication.cvPath ? "✅ Present" : "❌ Missing",
+        whyVolunteerLength: transformedApplication.whyVolunteer?.length || 0,
+        cvPathValue: transformedApplication.cvPath || "NOT_SET",
+      }
     );
-    return { data: transformedApplication };
-  } catch (error) {
-    console.error(
-      `❌ Failed to fetch volunteer application ${volunteerId}:`,
-      error
-    );
+
+    return transformedApplication;
+  } catch (error: any) {
+    console.error(`❌ Failed to fetch volunteer application ${id}:`, error);
 
     // Provide more specific error messages
     if (error instanceof Error) {
       if (error.message.includes("404")) {
-        throw new Error(
-          `Volunteer application with ID ${volunteerId} not found`
-        );
+        throw new Error(`Volunteer application with ID ${id} not found`);
       } else if (error.message.includes("403")) {
         throw new Error(
           "You don't have permission to view this volunteer application"

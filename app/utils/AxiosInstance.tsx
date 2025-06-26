@@ -18,11 +18,14 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// token management
+// Enhanced request interceptor
 API.interceptors.request.use((config) => {
-  // Try both refresh and access tokens
-  const token =
-    localStorage.getItem("accessToken") || localStorage.getItem("refreshToken");
+  // Always try to get the most recent token
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  // Prefer access token over refresh token
+  const token = accessToken || refreshToken;
 
   if (token) {
     config.headers["Authorization"] = `Bearer ${token}`;
@@ -31,33 +34,38 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Enhanced response interceptor with better error handling
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // error handling for 401s
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // If we're already on login page or trying to login, don't retry
-      if (
-        originalRequest.url?.includes("/auth/login") ||
-        window.location.pathname === "/login"
-      ) {
-        return Promise.reject(error);
-      }
+    // Skip refresh for login and refresh endpoints
+    if (
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/refresh")
+    ) {
+      return Promise.reject(error);
+    }
 
+    // Handle 401 errors
+    if (error.response?.status === 401 && !originalRequest._retry) {
       const refreshToken = localStorage.getItem("refreshToken");
 
       if (!refreshToken) {
-        // No refresh token available, redirect to login
-        console.log("❌ No refresh token available, redirecting to login");
+        console.log(
+          "❌ No refresh token available, clearing auth and redirecting"
+        );
+        // Clear everything and redirect
         localStorage.clear();
+        sessionStorage.clear();
+        delete API.defaults.headers.common["Authorization"];
         window.location.href = "/login";
         return Promise.reject(error);
       }
 
       if (isRefreshing) {
-        // Already refreshing, queue this request
+        // Queue the request while refreshing
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -74,7 +82,8 @@ API.interceptors.response.use(
       try {
         console.log("🔄 Attempting token refresh...");
 
-        const response = await axios.post(
+        // Use a fresh axios instance for refresh to avoid interceptor loops
+        const refreshResponse = await axios.post(
           "http://localhost:3100/api/auth/refresh",
           { refreshToken },
           {
@@ -84,33 +93,46 @@ API.interceptors.response.use(
           }
         );
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const {
+          accessToken,
+          refreshToken: newRefreshToken,
+          user,
+        } = refreshResponse.data;
 
-        // Store both tokens properly
-        if (accessToken) {
+        if (accessToken && newRefreshToken && user) {
+          console.log("✅ Token refresh successful for user:", user.email);
+
+          // Update localStorage
           localStorage.setItem("accessToken", accessToken);
-        }
-        if (newRefreshToken) {
           localStorage.setItem("refreshToken", newRefreshToken);
+          localStorage.setItem("userId", user.id);
+
+          // Update default headers
+          API.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${accessToken}`;
+          originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
+
+          // Process queued requests
+          processQueue(null, accessToken);
+
+          // Retry original request
+          return API(originalRequest);
+        } else {
+          throw new Error("Invalid refresh response structure");
         }
-
-        // Use access token for future requests
-        const tokenToUse = accessToken || newRefreshToken;
-        originalRequest.headers["Authorization"] = `Bearer ${tokenToUse}`;
-
-        processQueue(null, tokenToUse);
-
-        console.log("✅ Token refresh successful");
-        return API(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         console.error("❌ Token refresh failed:", refreshError);
 
+        // Process failed queue
         processQueue(refreshError, null);
 
-        // Clear all tokens and redirect to login
+        // Clear all auth data
         localStorage.clear();
+        sessionStorage.clear();
+        delete API.defaults.headers.common["Authorization"];
 
-        // Add small delay to prevent rapid redirects
+        // Redirect to login
         setTimeout(() => {
           window.location.href = "/login";
         }, 100);
