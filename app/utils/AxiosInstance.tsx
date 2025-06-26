@@ -18,31 +18,52 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// API.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("accessToken");
-//   if (token) {
-//     config.headers["Authorization"] = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+// token management
+API.interceptors.request.use((config) => {
+  // Try both refresh and access tokens
+  const token =
+    localStorage.getItem("accessToken") || localStorage.getItem("refreshToken");
+
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      localStorage.getItem("refreshToken")
-    ) {
+    // error handling for 401s
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // If we're already on login page or trying to login, don't retry
+      if (
+        originalRequest.url?.includes("/auth/login") ||
+        window.location.pathname === "/login"
+      ) {
+        return Promise.reject(error);
+      }
+
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (!refreshToken) {
+        // No refresh token available, redirect to login
+        console.log("❌ No refresh token available, redirecting to login");
+        localStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
+        // Already refreshing, queue this request
+        return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
             originalRequest.headers["Authorization"] = `Bearer ${token}`;
-            return axios(originalRequest);
+            return API(originalRequest);
           })
           .catch((err) => Promise.reject(err));
       }
@@ -51,22 +72,50 @@ API.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
+        console.log("🔄 Attempting token refresh...");
+
         const response = await axios.post(
           "http://localhost:3100/api/auth/refresh",
-          { refreshToken }
+          { refreshToken },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
         );
 
-        const { accessToken: newToken, refreshToken: newRefreshToken } =
-          response.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-        localStorage.setItem("refreshToken", newRefreshToken);
-        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-        processQueue(null, newToken);
-        return axios(originalRequest);
-      } catch (err) {
-        processQueue(err, null);
-        return Promise.reject(err);
+        // Store both tokens properly
+        if (accessToken) {
+          localStorage.setItem("accessToken", accessToken);
+        }
+        if (newRefreshToken) {
+          localStorage.setItem("refreshToken", newRefreshToken);
+        }
+
+        // Use access token for future requests
+        const tokenToUse = accessToken || newRefreshToken;
+        originalRequest.headers["Authorization"] = `Bearer ${tokenToUse}`;
+
+        processQueue(null, tokenToUse);
+
+        console.log("✅ Token refresh successful");
+        return API(originalRequest);
+      } catch (refreshError) {
+        console.error("❌ Token refresh failed:", refreshError);
+
+        processQueue(refreshError, null);
+
+        // Clear all tokens and redirect to login
+        localStorage.clear();
+
+        // Add small delay to prevent rapid redirects
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 100);
+
+        return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }

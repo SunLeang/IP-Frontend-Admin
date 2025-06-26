@@ -6,6 +6,8 @@ export interface MinioUploadResponse {
     originalName: string;
     size: number;
     url: string;
+    originalUrl: string;
+    thumbnailUrl: string;
   };
 }
 
@@ -27,21 +29,130 @@ export async function uploadImageToMinio(
   try {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("folder", folder);
 
     console.log(`📤 Uploading file to MinIO folder: ${folder}`);
-
-    const response = await API.post("/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+    console.log("📤 File details:", {
+      name: file.name,
+      size: file.size,
+      type: file.type, 
     });
 
-    console.log("✅ File uploaded successfully:", response.data);
-    return response.data;
-  } catch (error) {
+    // Check authentication before upload
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("refreshToken");
+    if (!token) {
+      throw new Error("Authentication required. Please login again.");
+    }
+
+    const response = await API.post(
+      `/file-upload/minio/image?folder=${folder}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000,
+      }
+    );
+
+    console.log("✅ Upload response:", response.data);
+
+    // Handle different response structures
+    const responseData = response.data;
+
+    // Check if response has the expected structure
+    if (!responseData || !responseData.data) {
+      throw new Error("Invalid response from server");
+    }
+
+    return {
+      data: {
+        filename: responseData.data.filename || responseData.data.fileName,
+        originalName: file.name,
+        size: file.size,
+        url: responseData.data.originalUrl || responseData.data.url,
+        originalUrl: responseData.data.originalUrl || responseData.data.url,
+        thumbnailUrl: responseData.data.thumbnailUrl || responseData.data.url,
+      },
+    };
+  } catch (error: any) {
     console.error("❌ Failed to upload file to MinIO:", error);
+    console.error("❌ Error details:", error.response?.data);
+
+    // Better error handling
+    if (error.response?.status === 401) {
+      // Don't throw auth error here, let the interceptor handle it
+      throw new Error("Authentication failed. Please try again.");
+    } else if (error.response?.status === 413) {
+      throw new Error("File size too large. Maximum size is 10MB.");
+    } else if (error.response?.status === 400) {
+      throw new Error("Invalid file type. Only images are allowed.");
+    } else if (error.code === "ECONNABORTED") {
+      throw new Error("Upload timeout. Please try again.");
+    } else if (error.message) {
+      throw new Error(error.message);
+    }
+
     throw new Error("Failed to upload file. Please try again.");
+  }
+}
+
+/**
+ * Upload document to MinIO storage
+ * @param file - The file to upload
+ * @param folder - The folder path in MinIO
+ * @returns Promise with upload result
+ */
+export async function uploadDocumentToMinio(
+  file: File,
+  folder: string = "cvs"
+): Promise<MinioUploadResponse> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    console.log(`📤 Uploading document to MinIO folder: ${folder}`);
+
+    // Check authentication
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("refreshToken");
+    if (!token) {
+      throw new Error("Authentication required. Please login again.");
+    }
+
+    const response = await API.post(
+      `/file-upload/minio/document?folder=${folder}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000,
+      }
+    );
+
+    console.log("✅ Document upload response:", response.data);
+
+    return {
+      data: {
+        filename: response.data.data.filename || response.data.data.fileName,
+        originalName: file.name,
+        size: file.size,
+        url: response.data.data.documentUrl || response.data.data.url,
+        originalUrl: response.data.data.documentUrl || response.data.data.url,
+        thumbnailUrl: response.data.data.documentUrl || response.data.data.url,
+      },
+    };
+  } catch (error: any) {
+    console.error("❌ Failed to upload document to MinIO:", error);
+
+    if (error.response?.status === 401) {
+      throw new Error("Authentication failed. Please try again.");
+    }
+
+    throw new Error("Failed to upload document. Please try again.");
   }
 }
 
@@ -56,21 +167,55 @@ export async function deleteImageFromMinio(
   try {
     console.log(`🗑️ Deleting file from MinIO: ${filename}`);
 
-    const response = await API.delete(`/upload/${filename}`);
+    const response = await API.delete(
+      `/file-upload/minio/image/${encodeURIComponent(filename)}`
+    );
 
     console.log("✅ File deleted successfully:", response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Failed to delete file from MinIO:", error);
+
+    // Don't fail silently on delete errors
+    if (error.response?.status === 404) {
+      console.warn("⚠️ File not found, considering as deleted");
+      return { success: true, message: "File not found" };
+    }
+
     throw new Error("Failed to delete file. Please try again.");
   }
 }
 
 /**
- * Get MinIO image URL
- * @param filename - The filename to get URL for
- * @returns Full URL to the image
+ * Delete document from MinIO storage
+ * @param filename - The filename to delete
+ * @returns Promise with deletion result
  */
+export async function deleteDocumentFromMinio(
+  filename: string
+): Promise<MinioDeleteResponse> {
+  try {
+    console.log(`🗑️ Deleting document from MinIO: ${filename}`);
+
+    const response = await API.delete(
+      `/file-upload/minio/document/${encodeURIComponent(filename)}`
+    );
+
+    console.log("✅ Document deleted successfully:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Failed to delete document from MinIO:", error);
+
+    if (error.response?.status === 404) {
+      console.warn("⚠️ Document not found, considering as deleted");
+      return { success: true, message: "Document not found" };
+    }
+
+    throw new Error("Failed to delete document. Please try again.");
+  }
+}
+
+// Keep other functions unchanged
 export function getMinioImageUrl(filename: string): string {
   if (!filename) return "/assets/images/placeholder.png";
 
@@ -78,21 +223,27 @@ export function getMinioImageUrl(filename: string): string {
 
   const baseUrl = process.env.NEXT_PUBLIC_MINIO_URL || "http://localhost:9000";
 
-
-  if (filename.startsWith("images/") || filename.startsWith("eventura/")) {
+  if (filename.startsWith("images/")) {
     return `${baseUrl}/${filename}`;
   }
 
-  const bucketName = "images";
-  return `${baseUrl}/${bucketName}/${filename}`;
+  return `${baseUrl}/images/${filename}`;
 }
 
-/**
- * Upload multiple files to MinIO
- * @param files - Array of files to upload
- * @param folder - The folder path in MinIO
- * @returns Promise with array of upload results
- */
+export function getMinioThumbnailUrl(filename: string): string {
+  if (!filename) return "/assets/images/placeholder.png";
+
+  if (filename.startsWith("http")) return filename;
+
+  const baseUrl = process.env.NEXT_PUBLIC_MINIO_URL || "http://localhost:9000";
+
+  if (filename.startsWith("thumbnails/")) {
+    return `${baseUrl}/${filename}`;
+  }
+
+  return `${baseUrl}/thumbnails/${filename}`;
+}
+
 export async function uploadMultipleFiles(
   files: File[],
   folder: string = "general"
@@ -111,16 +262,11 @@ export async function uploadMultipleFiles(
   }
 }
 
-/**
- * Check if file type is supported
- * @param file - File to check
- * @param allowedTypes - Array of allowed MIME types
- * @returns boolean
- */
 export function isFileTypeSupported(
   file: File,
   allowedTypes: string[] = [
     "image/jpeg",
+    "image/jpg",
     "image/png",
     "image/gif",
     "image/webp",
@@ -129,41 +275,50 @@ export function isFileTypeSupported(
   return allowedTypes.includes(file.type);
 }
 
-/**
- * Check if file size is within limit
- * @param file - File to check
- * @param maxSizeMB - Maximum size in MB
- * @returns boolean
- */
+export function isDocumentTypeSupported(file: File): boolean {
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  return allowedTypes.includes(file.type);
+}
+
 export function isFileSizeValid(file: File, maxSizeMB: number = 10): boolean {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   return file.size <= maxSizeBytes;
 }
 
-/**
- * Validate file before upload
- * @param file - File to validate
- * @param options - Validation options
- * @returns Validation result
- */
 export function validateFile(
   file: File,
   options: {
     maxSizeMB?: number;
     allowedTypes?: string[];
+    isDocument?: boolean;
   } = {}
 ): { isValid: boolean; error?: string } {
   const {
     maxSizeMB = 10,
-    allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"],
+    allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ],
+    isDocument = false,
   } = options;
 
-  if (!isFileTypeSupported(file, allowedTypes)) {
+  const typeCheckFunction = isDocument
+    ? isDocumentTypeSupported
+    : isFileTypeSupported;
+  if (!typeCheckFunction(file, allowedTypes)) {
+    const typeDescription = isDocument
+      ? "PDF, DOC, DOCX"
+      : "JPEG, PNG, GIF, WebP";
     return {
       isValid: false,
-      error: `File type not supported. Allowed types: ${allowedTypes.join(
-        ", "
-      )}`,
+      error: `File type not supported. Allowed types: ${typeDescription}`,
     };
   }
 
